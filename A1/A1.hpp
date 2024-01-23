@@ -22,6 +22,8 @@ protected:
 	virtual void draw() override;
 	virtual void cleanup() override;
 
+	void reset();
+
 	virtual bool cursorEnterWindowEvent(int entered) override;
 	virtual bool mouseMoveEvent(double xPos, double yPos) override;
 	virtual bool mouseButtonInputEvent(int button, int actions, int mods) override;
@@ -42,6 +44,10 @@ private:
 	// Fields related to grid geometry.
 	GLuint m_grid_vao; // Vertex Array Object
 	GLuint m_grid_vbo; // Vertex Buffer Object
+
+	// Fields related to cube geometry.
+	GLuint m_cube_vao; // Vertex Array Object
+	GLuint m_cube_vbo; // Vertex Buffer Object
 
 	// Matrices controlling the camera and projection.
 	glm::mat4 proj;
