@@ -10,6 +10,14 @@
 
 #include "maze.hpp"
 
+enum Direction
+{
+	UP = 1,
+	DOWN = 2,
+	RIGHT = 3,
+	LEFT = 4
+};
+
 class A1 : public CS488Window {
 public:
 	A1();
@@ -22,8 +30,6 @@ protected:
 	virtual void draw() override;
 	virtual void cleanup() override;
 
-	void reset();
-
 	virtual bool cursorEnterWindowEvent(int entered) override;
 	virtual bool mouseMoveEvent(double xPos, double yPos) override;
 	virtual bool mouseButtonInputEvent(int button, int actions, int mods) override;
@@ -33,6 +39,13 @@ protected:
 
 private:
 	void initGrid();
+	void digMaze();
+	void drawWalls(size_t mazeDim);
+	void drawFloor(size_t mazeDim);
+	void drawAvatar();
+	void reset();
+
+	void handleMove(Direction dir);
 
 	// Fields related to the shader and uniforms.
 	ShaderProgram m_shader;
@@ -53,6 +66,30 @@ private:
 	glm::mat4 proj;
 	glm::mat4 view;
 
-	float colour[3];
+	glm::mat4 transform;
+
+	float m_floor_colour[3];
+	float m_avatar_colour[3];
+	float m_walls_colour[3];
 	int current_col;
+
+	Maze *m_maze;
+	int m_height_added;
+
+	int m_avatar_posn_row;
+	int m_avatar_posn_column;
+
+	bool m_maze_exists;
+
+	double m_last_x_pos;
+	double m_last_x_pos_while_dragging;
+	double m_threshold_for_persistence;
+	double m_persistence_speed;
+
+	float m_camera_scroll_pos;
+	float m_max_zoom;
+	float m_min_zoom;
+
+	bool m_persist;
+	bool m_check_if_should_persist;
 };

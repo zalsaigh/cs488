@@ -6,7 +6,7 @@
 #include "maze.hpp"
 
 Maze::Maze( size_t D )
-	: m_dim( D )
+	: m_dim( D ), m_start_column_idx( 0 )
 {
 	m_values = new int[ D * D ];
 
@@ -77,7 +77,7 @@ int Maze::numNeighbors(int r, int c) {
 void Maze::printMaze() {
 	int i,j;
 	for (i=0; i<m_dim; i++) {
-		for (j=0; j<m_dim; j++) { 
+		for (j=0; j<m_dim; j++) {
 			if ( getValue(i,j)==1 ) {
 				printf("X");
 			} else {
@@ -119,7 +119,7 @@ void Maze::recDigMaze(int r, int c) {
 			}
 			break;
 		}
-	} 
+	}
 }
 
 void Maze::digMaze()
@@ -134,6 +134,7 @@ void Maze::digMaze()
 
 	// pick random start location
 	int s=random()%(m_dim-2)+1;
+	m_start_column_idx = s;
 	setValue(0,s,0);
 	setValue(1,s,0);
 	recDigMaze(1,s);
@@ -156,4 +157,9 @@ void Maze::digMaze()
         setValue(m_dim/2+1,m_dim/2,0);
         setValue(m_dim/2+1,m_dim/2+1,0);
 
+}
+
+int Maze::getStartColumnIdx() const
+{
+	return m_start_column_idx;
 }
