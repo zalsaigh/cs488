@@ -406,7 +406,7 @@ void A1::drawAvatar() {
 			float yCoord = radius * cos(stackAngle) * sin(sectorAngle);
 			float zCoord = radius * sin(stackAngle);
 			verts.push_back(xCoord + fAvatarColumn + 0.5); // Add 0.5 to x and z to center the sphere in the grid
-			verts.push_back(yCoord + OFFSET_OFF_GRID);
+			verts.push_back(yCoord + OFFSET_OFF_GRID + 0.5); // Add 0.5 to y to get the sphere off the ground
 			verts.push_back(zCoord + fAvatarRow + 0.5);
 		}
 	}
@@ -445,7 +445,7 @@ void A1::drawAvatar() {
 			int bVertexYCoordIdx = bVertexXCoordIdx + 1;
 			int bVertexZCoordIdx = bVertexXCoordIdx + 2;
 
-			int cVertexXCoordIdx = ((i + 1) * (numSectors + 1) + (j + 1)) * 3;
+			int cVertexXCoordIdx = ((i + 1) * (numSectors + 1) + j) * 3;
 			int cVertexYCoordIdx = cVertexXCoordIdx + 1;
 			int cVertexZCoordIdx = cVertexXCoordIdx + 2;
 
