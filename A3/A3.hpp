@@ -8,17 +8,33 @@
 #include "cs488-framework/MeshConsolidator.hpp"
 
 #include "SceneNode.hpp"
+#include "Transformation.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>
 
-struct LightSource {
+struct LightSource
+{
 	glm::vec3 position;
 	glm::vec3 rgbIntensity;
 };
 
+enum MenuGui
+{
+	APPLICATION,
+	EDIT,
+	OPTIONS
+};
 
-class A3 : public CS488Window {
+enum InteractionMode
+{
+	POSITION_ORIENTATION,
+	JOINTS
+};
+
+
+class A3 : public CS488Window
+{
 public:
 	A3(const std::string & luaSceneFile);
 	virtual ~A3();
@@ -49,10 +65,14 @@ protected:
 
 	void initPerspectiveMatrix();
 	void uploadCommonSceneUniforms();
+	void recurseRenderNode(const SceneNode &node);
 	void renderSceneGraph(const SceneNode &node);
 	void renderArcCircle();
 
-	glm::mat4 m_perpsective;
+	//-- Trackball methods
+	void updateTrackballDimensions();
+
+	glm::mat4 m_perspective;
 	glm::mat4 m_view;
 
 	LightSource m_light;
@@ -79,4 +99,32 @@ protected:
 	std::string m_luaSceneFile;
 
 	std::shared_ptr<SceneNode> m_rootNode;
+
+	// Booleans for user options on the GUI or keyboard
+	bool m_useZBuffer;
+	bool m_useBackfaceCulling;
+	bool m_useFrontfaceCulling;
+
+	// Variable for which GUI to show
+	MenuGui m_currentMenu;
+
+	// Variable for current interaction mode
+	InteractionMode m_currentInteractionMode;
+
+	// Booleans for mouse input
+	bool m_isLeftButtonPressed;
+	bool m_isMiddleButtonPressed;
+	bool m_isRightButtonPressed;
+
+	// Tracking mouse movement
+	glm::vec2 m_lastMousePos;
+
+	// Trackball-related variables
+	float m_aspectRatio;
+	float m_trackballRadius;
+	glm::vec2 m_trackballCenter;
+
+	// For undo/redo stack
+	std::vector<Transformation> m_undoStack;
+	int m_currentUndoIndex;
 };

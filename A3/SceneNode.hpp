@@ -28,8 +28,12 @@ public:
     
     const glm::mat4& get_transform() const;
     const glm::mat4& get_inverse() const;
+
+    const glm::mat4& get_local_transform() const;
+    const glm::mat4& get_inverse_local_transform() const;
     
     void set_transform(const glm::mat4& m);
+    void set_local_transform(const glm::mat4& m);
     
     void add_child(SceneNode* child);
     
@@ -37,15 +41,18 @@ public:
 
 	//-- Transformations:
     void rotate(char axis, float angle);
+    void rotate(const glm::vec3& axisOfRotation, float angle);
+    void rotateAboutView(const glm::vec3& axisOfRotation, float angle);
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
-
 
 	friend std::ostream & operator << (std::ostream & os, const SceneNode & node);
 
 	bool isSelected;
     
     // Transformations
+    glm::mat4 localTrans; // Transformations that are local to just this node
+    glm::mat4 invLocalTrans;
     glm::mat4 trans;
     glm::mat4 invtrans;
     
@@ -54,7 +61,6 @@ public:
 	NodeType m_nodeType;
 	std::string m_name;
 	unsigned int m_nodeId;
-
 
 private:
 	// The number of SceneNode instances.
