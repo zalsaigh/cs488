@@ -649,7 +649,8 @@ bool A3::cursorEnterWindowEvent (
 bool A3::mouseMoveEvent (
 		double xPos,
 		double yPos
-) {
+) 
+{
 	bool eventHandled(false);
 	
 	float differenceX = xPos - m_lastMousePos.x;
@@ -682,33 +683,24 @@ bool A3::mouseMoveEvent (
 				/* 
 				* Equation of 3d sphere is x^2 + y^2 + z^2 = radius^2, so
 				* z location is usually sqrt(radius^2 - x^2 - y^2) but if x^2 + y^2 > radius^2 then we should rotate around z-axis
+				* If we normalize by radius, we get (x/radius)^2 + (y/radius)^2 <= 1 for the check
 				* Referenced from https://www.xarg.org/2021/07/trackball-rotation-using-quaternions/
 				*/
 				lastCursorPosVecOnTrackball /= m_trackballRadius;
 				currentCursorPosVecOnTrackball /= m_trackballRadius;
 				float lastPosXSquaredPlusYSquared = (lastCursorPosVecOnTrackball.x * lastCursorPosVecOnTrackball.x) + (lastCursorPosVecOnTrackball.y * lastCursorPosVecOnTrackball.y);
 				float currentPosXSquaredPlusYSquared = (currentCursorPosVecOnTrackball.x * currentCursorPosVecOnTrackball.x) + (currentCursorPosVecOnTrackball.y * currentCursorPosVecOnTrackball.y);
-				float radiusSquared = m_trackballRadius * m_trackballRadius;
-
-				// float cosAngleOfRotation = (glm::dot(lastCursorPosVecOnTrackball, currentCursorPosVecOnTrackball)) / 
-				// 		(glm::length(lastCursorPosVecOnTrackball) * glm::length(currentCursorPosVecOnTrackball));
-				// float angleOfRotation = glm::acos(glm::clamp(cosAngleOfRotation, -1.0f, 1.0f));
 				
 				if (currentPosXSquaredPlusYSquared <= 1.0f && lastPosXSquaredPlusYSquared <= 1.0f)
-				// if (currentPosXSquaredPlusYSquared <= radiusSquared && lastPosXSquaredPlusYSquared <= radiusSquared)
 				{
-					// float currentPosZ = glm::sqrt(radiusSquared - currentPosXSquaredPlusYSquared);
-					// float lastPosZ = glm::sqrt(radiusSquared - lastPosXSquaredPlusYSquared);
 					float currentPosZ = glm::sqrt(1.0f - currentPosXSquaredPlusYSquared);
 					float lastPosZ = glm::sqrt(1.0f - lastPosXSquaredPlusYSquared);
-					// glm::vec3 axisOfRotation = glm::normalize(glm::cross(glm::vec3(lastCursorPosVecOnTrackball, lastPosZ), glm::vec3(currentCursorPosVecOnTrackball, currentPosZ)));
 					glm::vec3 axisOfRotation = glm::cross(glm::vec3(lastCursorPosVecOnTrackball, lastPosZ), glm::vec3(currentCursorPosVecOnTrackball, currentPosZ));
 					axisOfRotation.x = -axisOfRotation.x;
 					float angleOfRotation = glm::length(axisOfRotation);
 					if (0.000001f < angleOfRotation || -0.000001f > angleOfRotation)
 					{
 						m_rootNode->rotate(axisOfRotation/angleOfRotation, angleOfRotation);
-						std::cout << "Axis: " << axisOfRotation << ", Angle: " << angleOfRotation << "\n";
 					}
 					
 				} else 
@@ -718,13 +710,28 @@ bool A3::mouseMoveEvent (
 					// if zCross > 0, then current is clockwise from last, and we need a negative angle rotation
 					// if zCross < 0, then we need positive angle rotation.
 
-					float cosAngleOfRotation = (glm::dot(lastCursorPosVecOnTrackball, currentCursorPosVecOnTrackball)) / 
-						(glm::length(lastCursorPosVecOnTrackball) * glm::length(currentCursorPosVecOnTrackball));
-					float angleOfRotation = glm::acos(glm::clamp(cosAngleOfRotation, -1.0f, 1.0f));
+					float lengthOfCurrVec = glm::sqrt(currentPosXSquaredPlusYSquared);
+					float lengthOfLastVec = glm::sqrt(lastPosXSquaredPlusYSquared);
+					float currentPosZ = 0.0f;
+					float lastPosZ = 0.0f;
+					lastCursorPosVecOnTrackball /= lengthOfLastVec;
+					currentCursorPosVecOnTrackball /= lengthOfCurrVec;
 
-					float zCross = lastCursorPosVecOnTrackball.x * currentCursorPosVecOnTrackball.y - lastCursorPosVecOnTrackball.y * currentCursorPosVecOnTrackball.x;
-					angleOfRotation = (zCross < 0) ? angleOfRotation : -angleOfRotation;
-					m_rootNode->rotateAboutView(glm::vec3(0,0,1), angleOfRotation); 
+					glm::vec3 axisOfRotation = glm::cross(glm::vec3(lastCursorPosVecOnTrackball, lastPosZ), glm::vec3(currentCursorPosVecOnTrackball, currentPosZ));
+					axisOfRotation.z = -axisOfRotation.z;
+					float angleOfRotation = glm::length(axisOfRotation);
+					if (0.000001f < angleOfRotation || -0.000001f > angleOfRotation)
+					{
+						m_rootNode->rotate(axisOfRotation/angleOfRotation, angleOfRotation);
+					}
+
+					// float cosAngleOfRotation = (glm::dot(lastCursorPosVecOnTrackball, currentCursorPosVecOnTrackball)) / 
+					// 	(glm::length(lastCursorPosVecOnTrackball) * glm::length(currentCursorPosVecOnTrackball));
+					// float angleOfRotation = glm::acos(glm::clamp(cosAngleOfRotation, -1.0f, 1.0f));
+
+					// float zCross = lastCursorPosVecOnTrackball.x * currentCursorPosVecOnTrackball.y - lastCursorPosVecOnTrackball.y * currentCursorPosVecOnTrackball.x;
+					// angleOfRotation = (zCross < 0) ? angleOfRotation : -angleOfRotation;
+					// m_rootNode->rotateAboutView(glm::vec3(0,0,1), angleOfRotation); 
 				}
 				eventHandled = true;
 			}

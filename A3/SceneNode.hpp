@@ -55,6 +55,10 @@ public:
     glm::mat4 invLocalTrans;
     glm::mat4 trans;
     glm::mat4 invtrans;
+
+    glm::mat4 localRotationsAndScales;
+    glm::mat4 localTranslations;
+    glm::mat4 localViewRotations;
     
     std::list<SceneNode*> children;
 

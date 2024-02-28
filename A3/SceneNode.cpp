@@ -26,6 +26,9 @@ SceneNode::SceneNode(const std::string& name)
 	invtrans(mat4()),
 	localTrans(mat4()),
 	invLocalTrans(mat4()),
+	localRotationsAndScales(mat4()),
+	localTranslations(mat4()),
+	localViewRotations(mat4()),
 	isSelected(false),
 	m_nodeId(nodeInstanceCount++)
 {
@@ -112,27 +115,37 @@ void SceneNode::rotate(char axis, float angle) {
 		default:
 			break;
 	}
-	localTrans = glm::rotate(degreesToRadians(angle), rot_axis) * localTrans;
+	localRotationsAndScales = glm::rotate(degreesToRadians(angle), rot_axis) * localRotationsAndScales;
+	// localTrans = localRotationsAndScales * localTrans;
+	set_local_transform(localViewRotations * localTranslations * localRotationsAndScales);
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::rotate(const glm::vec3& axisOfRotation, float angleInRadians) {
-	localTrans = localTrans * glm::rotate(angleInRadians, axisOfRotation);
+	localRotationsAndScales = glm::rotate(angleInRadians, axisOfRotation) * localRotationsAndScales;
+	// localTrans = localTrans * glm::rotate(angleInRadians, axisOfRotation);
+	set_local_transform(localViewRotations * localTranslations * localRotationsAndScales);
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::rotateAboutView(const glm::vec3& axisOfRotation, float angleInRadians) {
-	localTrans = glm::rotate(angleInRadians, axisOfRotation) * localTrans;
+	// localTrans = glm::rotate(angleInRadians, axisOfRotation) * localTrans;
+	localViewRotations = glm::rotate(angleInRadians, axisOfRotation) * localViewRotations;
+	set_local_transform(localViewRotations * localTranslations * localRotationsAndScales);
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::scale(const glm::vec3 & amount) {
-	localTrans = localTrans * glm::scale(amount) * glm::inverse(localTrans);
+	// localTrans = localTrans * glm::scale(amount);
+	localRotationsAndScales = localRotationsAndScales * ::scale(amount);
+	set_local_transform(localViewRotations * localTranslations * localRotationsAndScales);
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::translate(const glm::vec3& amount) {
-	localTrans =  glm::translate(amount) * localTrans;
+	// localTrans =  glm::translate(amount) * localTrans;
+	localTranslations = glm::translate(amount) * localTranslations;
+	set_local_transform(localViewRotations * localTranslations * localRotationsAndScales);
 }
 
 

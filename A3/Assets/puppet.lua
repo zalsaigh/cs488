@@ -1,11 +1,11 @@
 -- Puppet A3:
 --------------------------------------------------------------------------------
 -- Create materials here
-bullMaterial = gr.material({0.29, 0.22, 0.17}, {0.8, 0.8, 0.8}, 10.0) -- Brown colour
+bullMaterial = gr.material({0.29, 0.22, 0.17}, {0.8, 0.8, 0.8}, 5.0) -- Brown colour
 wingMaterial = gr.material({0.8, 0.8, 0.8}, {0.8, 0.8, 0.8}, 10.0)
-hairMaterial = gr.material({0.1, 0.1, 0.1}, {0.8, 0.8, 0.8}, 10.0)
-skinMaterial = gr.material({0.75, 0.56, 0.38}, {0.8, 0.8, 0.8}, 10.0)
-hatMaterial = gr.material({0.85, 0.65, 0.13}, {0.8, 0.8, 0.8}, 10.0)
+hairMaterial = gr.material({0.1, 0.1, 0.1}, {0.8, 0.8, 0.8}, 5.0)
+skinMaterial = gr.material({0.75, 0.56, 0.38}, {0.8, 0.8, 0.8}, 5.0)
+hatMaterial = gr.material({0.85, 0.65, 0.13}, {1, 1, 1}, 30.0)
 boneMaterial = gr.material({0.89, 0.85, 0.79}, {0.8, 0.8, 0.8}, 10.0)
 
 
@@ -16,7 +16,6 @@ boneMaterial = gr.material({0.89, 0.85, 0.79}, {0.8, 0.8, 0.8}, 10.0)
 --------------------------------------------------------------------------------
 -- Create the top level root node named 'root'.
 rootNode = gr.node('root')
-rootNode:rotate('y', 90)
 rootNode:translate(0.0, 0.0, -8.0)
 
 --------------------------------------------------------------------------------
@@ -28,25 +27,36 @@ rootNode:add_child(torsoMesh)
 
 --------------------------------------------------------------------------------
 -- Wings
+
+rightWingJoint = gr.joint('right_wing_joint', {0, 0, 90}, {0, 0, 0})
+rootNode:add_child(rightWingJoint)
+
 rightWingMesh = gr.mesh('wing', 'right_wing')
 rightWingMesh:translate(-0.47, 2.08, 0.5)
 rightWingMesh:set_material(wingMaterial)
 
-torsoMesh:add_child(rightWingMesh)
+rightWingJoint:add_child(rightWingMesh)
+
+leftWingJoint = gr.joint('left_wing_joint', {-90, 0, 0}, {0, 0, 0})
+rootNode:add_child(leftWingJoint)
 
 leftWingMesh = gr.mesh('wing', 'left_wing')
 leftWingMesh:translate(-0.47, 2.08, -0.5)
 leftWingMesh:set_material(wingMaterial)
 
-torsoMesh:add_child(leftWingMesh)
+leftWingJoint:add_child(leftWingMesh)
 
 --------------------------------------------------------------------------------
 -- Tail
+
+tailJoint = gr.joint('tail_joint', {-90, 0, 90}, {0, 0, 0})
+rootNode:add_child(tailJoint)
+
 tailMesh = gr.mesh("tail", "tail")
 tailMesh:translate(-2.8, 0.0, 0.0)
 tailMesh:set_material(bullMaterial)
 
-torsoMesh:add_child(tailMesh)
+tailJoint:add_child(tailMesh)
 
 --------------------------------------------------------------------------------
 -- Tail hair
@@ -59,6 +69,7 @@ tailMesh:add_child(tailHairMesh)
 
 --------------------------------------------------------------------------------
 -- Neck
+
 neckMesh = gr.mesh('neck', 'neck')
 neckMesh:translate(2.38, 1.24, 0.0)
 neckMesh:set_material(bullMaterial)
@@ -66,12 +77,15 @@ neckMesh:set_material(bullMaterial)
 torsoMesh:add_child(neckMesh)
 --------------------------------------------------------------------------------
 -- Head
+
+headJoint = gr.mesh("headJoint", {0, 0, 0}, {-45, 0, 45})
+rootNode:add_child(headJoint)
+
 headMesh = gr.mesh("head", "head")
 headMesh:translate(0.20, 0.60, 0.0)
 headMesh:set_material(skinMaterial)
 
-
-neckMesh:add_child(headMesh)
+headJoint:add_child(headMesh)
 
 --------------------------------------------------------------------------------
 -- Beard
@@ -141,23 +155,32 @@ upperRightFrontLegBallMesh:set_material(bullMaterial)
 
 torsoMesh:add_child(upperRightFrontLegBallMesh)
 
+upperRightFrontLegJoint = gr.joint('upper_right_front_leg_joint', {0, 0, 90}, {0, 0, 90})
+rootNode:add_child(upperRightFrontLegJoint)
+
 upperRightFrontLegMesh = gr.mesh("upper_leg", "upper_right_front_leg")
 upperRightFrontLegMesh:translate(0.0, -0.61, 0.0)
 upperRightFrontLegMesh:set_material(bullMaterial)
 
-upperRightFrontLegBallMesh:add_child(upperRightFrontLegMesh)
+upperRightFrontLegJoint:add_child(upperRightFrontLegMesh)
+
+lowerRightFrontLegJoint = gr.joint('lower_right_front_leg_joint', {0, 0, 90}, {0, 0, 90})
+upperRightFrontLegJoint:add_child(lowerRightFrontLegJoint)
 
 lowerRightFrontLegMesh = gr.mesh("lower_leg", "lower_right_front_leg")
 lowerRightFrontLegMesh:translate(0.0, -1.1, 0.0)
 lowerRightFrontLegMesh:set_material(bullMaterial)
 
-upperRightFrontLegMesh:add_child(lowerRightFrontLegMesh)
+lowerRightFrontLegJoint:add_child(lowerRightFrontLegMesh)
+
+rightFrontHoofJoint = gr.joint('right_front_hoof_joint', {0, 0, 90}, {0, 0, 90})
+lowerRightFrontLegJoint:add_child(rightFrontHoofJoint)
 
 rightFrontHoofMesh = gr.mesh("hoof", "right_front_hoof")
 rightFrontHoofMesh:translate(0.0, -0.53, 0.0)
 rightFrontHoofMesh:set_material(boneMaterial)
 
-lowerRightFrontLegMesh:add_child(rightFrontHoofMesh)
+rightFrontHoofJoint:add_child(rightFrontHoofMesh)
 
 --------------------------------------------------------------------------------
 -- Left Front Leg
@@ -167,23 +190,32 @@ upperLeftFrontLegBallMesh:set_material(bullMaterial)
 
 torsoMesh:add_child(upperLeftFrontLegBallMesh)
 
+upperLeftFrontLegJoint = gr.joint("upper_left_front_leg_joint", {0, 0, 90}, {0, 0, 0})
+rootNode:add_child(upperLeftFrontLegJoint)
+
 upperLeftFrontLegMesh = gr.mesh("upper_leg", "upper_left_front_leg")
 upperLeftFrontLegMesh:translate(0.0, -0.61, 0.0)
 upperLeftFrontLegMesh:set_material(bullMaterial)
 
-upperLeftFrontLegBallMesh:add_child(upperLeftFrontLegMesh)
+upperLeftFrontLegJoint:add_child(upperLeftFrontLegMesh)
+
+lowerLeftFrontLegJoint = gr.joint("lower_left_front_leg_joint", {0, 0, 90}, {0, 0, 0})
+upperLeftFrontLegJoint:add_child(lowerLeftFrontLegJoint)
 
 lowerLeftFrontLegMesh = gr.mesh("lower_leg", "lower_left_front_leg")
 lowerLeftFrontLegMesh:translate(0.0, -1.1, 0.0)
 lowerLeftFrontLegMesh:set_material(bullMaterial)
 
-upperLeftFrontLegMesh:add_child(lowerLeftFrontLegMesh)
+lowerLeftFrontLegJoint:add_child(lowerLeftFrontLegMesh)
+
+leftFrontHoofJoint = gr.joint("left_front_hoof_joint", {0, 0, 90}, {0, 0, 0})
+lowerLeftFrontLegJoint:add_child(leftFrontHoofJoint)
 
 leftFrontHoofMesh = gr.mesh("hoof", "left_front_hoof")
 leftFrontHoofMesh:translate(0.0, -0.53, 0.0)
 leftFrontHoofMesh:set_material(boneMaterial)
 
-lowerLeftFrontLegMesh:add_child(leftFrontHoofMesh)
+leftFrontHoofJoint:add_child(leftFrontHoofMesh)
 
 --------------------------------------------------------------------------------
 -- Right Back Leg
