@@ -179,8 +179,10 @@ void A3::processLuaSceneFile(const std::string & filename) {
 void A3::createShaderProgram()
 {
 	m_shader.generateProgramObject();
-	m_shader.attachVertexShader( getAssetFilePath("VertexShader.vs").c_str() );
-	m_shader.attachFragmentShader( getAssetFilePath("FragmentShader.fs").c_str() );
+	// m_shader.attachVertexShader( getAssetFilePath("VertexShader.vs").c_str() );
+	// m_shader.attachFragmentShader( getAssetFilePath("FragmentShader.fs").c_str() );
+	m_shader.attachVertexShader( getAssetFilePath("Phong.vs").c_str() );
+	m_shader.attachFragmentShader( getAssetFilePath("Phong.fs").c_str() );
 	m_shader.link();
 
 	m_shader_arcCircle.generateProgramObject();
@@ -326,7 +328,7 @@ void A3::initViewMatrix() {
 //----------------------------------------------------------------------------------------
 void A3::initLightSources() {
 	// World-space position
-	m_light.position = vec3(10.0f, 10.0f, 10.0f);
+	m_light.position = vec3(5.0f, 5.0f, 5.0f);
 	m_light.rgbIntensity = vec3(1.0f); // light
 }
 
@@ -355,10 +357,11 @@ void A3::uploadCommonSceneUniforms() {
 
 			//-- Set background light ambient intensity
 			//{
-			location = m_shader.getUniformLocation("ambientIntensity");
-			vec3 ambientIntensity(0.25f);
-			glUniform3fv(location, 1, value_ptr(ambientIntensity));
-			CHECK_GL_ERRORS;
+			// location = m_shader.getUniformLocation("ambientIntensity");
+			// // vec3 ambientIntensity(0.25f);
+			// vec3 ambientIntensity(0.25f, 0.2245f, 0.0645f);
+			// glUniform3fv(location, 1, value_ptr(ambientIntensity));
+			// CHECK_GL_ERRORS;
 			//}
 		}
 	}
@@ -648,6 +651,21 @@ static void updateShaderUniforms(
 				const GeometryNode *geometryNode = static_cast<const GeometryNode *>(&node);
 				vec3 kd = geometryNode->material.kd;
 				glUniform3fv(location, 1, value_ptr(kd));
+				CHECK_GL_ERRORS;
+
+				location = shader.getUniformLocation("material.ks");
+				vec3 ks = geometryNode->material.ks;
+				glUniform3fv(location, 1, value_ptr(ks));
+				CHECK_GL_ERRORS;
+
+				location = shader.getUniformLocation("material.ambientIntensity");
+				vec3 ambientIntensity = geometryNode->material.ambientIntensity;
+				glUniform3fv(location, 1, value_ptr(ambientIntensity));
+				CHECK_GL_ERRORS;
+
+				location = shader.getUniformLocation("material.shininess");
+				float shininess = geometryNode->material.shininess;
+				glUniform1f(location, shininess);
 				CHECK_GL_ERRORS;
 			}	
 		}

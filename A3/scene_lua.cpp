@@ -182,22 +182,29 @@ int gr_material_cmd(lua_State* L)
 
   luaL_argcheck(L, luaL_len(L, 2) == 3, 2, "Three-tuple expected");
 
-  luaL_checktype(L, 3, LUA_TNUMBER);
+  luaL_checktype(L, 3, LUA_TTABLE);
 
-  double kd[3], ks[3];
+  luaL_argcheck(L, luaL_len(L, 3) == 3, 3, "Three-tuple expected");
+
+  luaL_checktype(L, 4, LUA_TNUMBER);
+
+  double kd[3], ks[3], ambientIntensity[3];
   for (int i = 1; i <= 3; i++) {
     lua_rawgeti(L, 1, i);
     kd[i - 1] = luaL_checknumber(L, -1);
     lua_rawgeti(L, 2, i);
     ks[i - 1] = luaL_checknumber(L, -1);
-    lua_pop(L, 2);
+    lua_rawgeti(L, 3, i);
+    ambientIntensity[i - 1] = luaL_checknumber(L, -1);
+    lua_pop(L, 3);
   }
-  double shininess = luaL_checknumber(L, 3);
+  double shininess = luaL_checknumber(L, 4);
 
 	data->material = new Material();
 	for(int i(0); i < 3; ++i) {
 		data->material->kd[i] = kd[i];
 		data->material->ks[i] = ks[i];
+    data->material->ambientIntensity[i] = ambientIntensity[i];
 	}
 	data->material->shininess = shininess;
 

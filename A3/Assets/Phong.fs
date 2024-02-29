@@ -14,10 +14,14 @@ in VsOutFsIn {
 
 out vec4 fragColour;
 
+// For picking
+uniform bool picking;
+
 struct Material {
     vec3 kd;
     vec3 ks;
     float shininess;
+    vec3 ambientIntensity;
 };
 uniform Material material;
 
@@ -49,9 +53,15 @@ vec3 phongModel(vec3 fragPosition, vec3 fragNormal) {
         specular = material.ks * pow(n_dot_h, material.shininess);
     }
 
-    return ambientIntensity + light.rgbIntensity * (diffuse + specular);
+    return material.ambientIntensity + light.rgbIntensity * (diffuse + specular);
 }
 
 void main() {
-	fragColour = vec4(phongModel(fs_in.position_ES, fs_in.normal_ES), 1.0);
+    if (picking)
+    {
+        fragColour = vec4(material.kd, 1.0);
+    } else {
+        fragColour = vec4(phongModel(fs_in.position_ES, fs_in.normal_ES), 1.0);
+    }
+	
 }

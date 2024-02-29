@@ -2,6 +2,12 @@
 
 Run this program with ./Assets/puppet.lua. I tested this on the VBox VM. I used c++17 instead of 14.
 
+I used Phong shading, and implemented ambient intensity into the Material class. This means that, to get a3mark.lua working, you just need to add a third vec3 to the materials, like so:
+
+red = gr.material({1.0, 0.0, 0.0}, {0.1, 0.1, 0.1}, {0.1, 0.1, 0.1}, 10)
+
+Note the third {0.1, 0.1, 0.1}
+
 # Manual/Assumptions
 
 I changed the background colour to purple.
@@ -33,6 +39,8 @@ The model I used is (a simplified) "Lamassu". I'm of Iraqi origin and I wanted t
 I changed SceneNode to include custom rotate functions that do not rely on a character axis (also a rotate function for the view). I also gave it "local" transformation data. I also implemented most of selection in SceneNode - the selection map comes from there, and so does the function to convert node ID to RGB. I finally also gave it initial transformation data for reset to work properly.
 
 For picking, I changed up scene_lua.cpp and GeometryNode to include the original material of the geometry node so I can switch back to it when the node is deselected. I also added z_axis joint rotation support to the scene_lua.cpp and hpp files.
+
+I changed up the Material class to have ambientIntensity.
 
 I added a custom joint_rotate() function to Joint Node, and I also created the JointRotationCommand class in JointNode's files for undoing and redoing joint node rotations.
 

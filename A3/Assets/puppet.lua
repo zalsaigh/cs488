@@ -1,12 +1,15 @@
 -- Puppet A3:
 --------------------------------------------------------------------------------
 -- Create materials here
-bullMaterial = gr.material({0.29, 0.22, 0.17}, {0.8, 0.8, 0.8}, 5.0) -- Brown colour
-wingMaterial = gr.material({0.8, 0.8, 0.8}, {0.8, 0.8, 0.8}, 10.0)
-hairMaterial = gr.material({0.1, 0.1, 0.1}, {0.8, 0.8, 0.8}, 5.0)
-skinMaterial = gr.material({0.75, 0.56, 0.38}, {0.8, 0.8, 0.8}, 5.0)
-hatMaterial = gr.material({0.85, 0.65, 0.13}, {1, 1, 1}, 30.0)
-boneMaterial = gr.material({0.89, 0.85, 0.79}, {0.8, 0.8, 0.8}, 10.0)
+-- bullMaterial = gr.material({0.29, 0.22, 0.17}, {0.8, 0.8, 0.8}, {0.25, 0.25 , 0.25}, 5.0) -- Brown colour
+bullMaterial = gr.material({0.25, 0.17, 0.13}, {0.1, 0.1, 0.1}, {0.15, 0.15, 0.05}, 2.0)
+wingMaterial = gr.material({0.8, 0.8, 0.8}, {0.1, 0.1, 0.1}, {0.25, 0.25 , 0.25}, 20.0)
+-- hairMaterial = gr.material({0.1, 0.1, 0.1}, {0.8, 0.8, 0.8}, 5.0)
+hairMaterial = gr.material({0.1, 0.1, 0.1}, {0.1, 0.1, 0.1}, {0.05375, 0.05, 0.06625}, 5.0)
+skinMaterial = gr.material({0.75, 0.56, 0.38}, {0.1, 0.1, 0.1}, {0.25, 0.25 , 0.25}, 5.0)
+-- hatMaterial = gr.material({0.85, 0.65, 0.13}, {1, 1, 1}, 30.0)
+hatMaterial = gr.material({0.75164, 0.60648, 0.22648}, {0.8, 0.8, 0.8}, {0.24725, 0.2245, 0.0645}, 83.2)
+boneMaterial = gr.material({0.89, 0.85, 0.79}, {0.4, 0.4, 0.4}, {0.25, 0.25 , 0.25}, 10.0)
 
 
 --------------------------------------------------------------------------------
@@ -164,6 +167,7 @@ upperRightFrontLegBallMesh:set_material(bullMaterial)
 torsoMesh:add_child(upperRightFrontLegBallMesh)
 
 upperRightFrontLegJoint = gr.joint('upper_right_front_leg_joint', {0, 0, 0}, {0, 0, 0}, {-25, 0, 45})
+upperRightFrontLegJoint:scale(1.2, 1.0, 1.2)
 upperRightFrontLegJoint:translate(1.6, -0.36, 0.81)
 rootNode:add_child(upperRightFrontLegJoint)
 
@@ -204,6 +208,7 @@ upperLeftFrontLegBallMesh:set_material(bullMaterial)
 torsoMesh:add_child(upperLeftFrontLegBallMesh)
 
 upperLeftFrontLegJoint = gr.joint("upper_left_front_leg_joint", {0, 0, 0}, {0, 0, 0}, {-25, 0, 45})
+upperLeftFrontLegJoint:scale(1.2, 1.0, 1.2)
 upperLeftFrontLegJoint:translate(1.6, -0.36, -0.81)
 rootNode:add_child(upperLeftFrontLegJoint)
 
@@ -244,6 +249,7 @@ upperRightBackLegBallMesh:set_material(bullMaterial)
 torsoMesh:add_child(upperRightBackLegBallMesh)
 
 upperRightBackLegJoint = gr.joint("upper_right_back_leg_joint", {0, 0, 0}, {0, 0, 0}, {-45, 0, 25})
+upperRightBackLegJoint:scale(1.2, 1.0, 1.2)
 upperRightBackLegJoint:translate(-1.9, -0.36, 0.81)
 rootNode:add_child(upperRightBackLegJoint)
 
@@ -284,6 +290,7 @@ upperLeftBackLegBallMesh:set_material(bullMaterial)
 torsoMesh:add_child(upperLeftBackLegBallMesh)
 
 upperLeftBackLegJoint = gr.joint("upper_left_back_leg_joint", {0, 0, 0}, {0, 0, 0}, {-45, 0, 25})
+upperLeftBackLegJoint:scale(1.2, 1.0, 1.2)
 upperLeftBackLegJoint:translate(-1.9, -0.36, -0.81)
 rootNode:add_child(upperLeftBackLegJoint)
 

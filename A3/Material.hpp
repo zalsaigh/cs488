@@ -10,7 +10,8 @@ struct Material {
 	Material()
 			: kd(glm::vec3(0.0f)),
 			  ks(glm::vec3(0.0f)),
-			  shininess(0.0f) { }
+			  shininess(0.0f),
+			  ambientIntensity(glm::vec3(0.0f)) { }
 
 	// Diffuse reflection coefficient
 	glm::vec3 kd;
@@ -21,4 +22,6 @@ struct Material {
 	// Material shininess constant.  Larger positive values model surfaces that
 	// are smoother or mirror-like.  Smaller positive values model rougher surfaces.
 	float shininess;
+
+	glm::vec3 ambientIntensity;
 };
