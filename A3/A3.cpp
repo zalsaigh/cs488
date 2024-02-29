@@ -33,14 +33,19 @@ A3::A3(const std::string & luaSceneFile)
 	  m_vbo_vertexNormals(0),
 	  m_vao_arcCircle(0),
 	  m_vbo_arcCircle(0),
-	  m_currentUndoIndex(0),
+	  m_currentUndoIndex(-1), // -1 when empty, 0 for 1 thing
 	  m_lastMousePos(glm::vec2(0.0f)),
 	  m_useZBuffer(true),
+	  m_handleRightClickJointRotation(true),
+	  m_showCircle(false),
 	  m_useBackfaceCulling(false),
 	  m_useFrontfaceCulling(false),
 	  m_isLeftButtonPressed(false),
 	  m_isMiddleButtonPressed(false),
 	  m_isRightButtonPressed(false),
+	  m_picking(false),
+	  m_showUndoMessage(false),
+	  m_showRedoMessage(false),
 	  m_currentMenu(MenuGui::APPLICATION),
 	  m_currentInteractionMode(InteractionMode::POSITION_ORIENTATION)
 
@@ -56,14 +61,38 @@ A3::~A3()
 }
 
 //----------------------------------------------------------------------------------------
+// Initialize the initial local transformations. This will be used in reset()
+void initNodeInitialTransformations(SceneNode *node)
+{
+	node->initialLocalRotations = node->localRotations;
+	node->initialLocalScales = node->localScales;
+	node->initialLocalTranslations = node->localTranslations;
+	for (auto *child : node->children)
+	{
+		initNodeInitialTransformations(child);
+	}
+}
+
+//----------------------------------------------------------------------------------------
+void initTreeInitialTransformations(std::shared_ptr<SceneNode> root)
+{
+	root->initialLocalRotations = root->localRotations;
+	root->initialLocalScales = root->localScales;
+	root->initialLocalTranslations = root->localTranslations;
+	for (auto *child : root->children)
+	{
+		initNodeInitialTransformations(child);
+	}
+}
+
+//----------------------------------------------------------------------------------------
 /*
  * Called once, at program start.
  */
 void A3::init()
 {
 	// Set the background colour.
-	// glClearColor(0.85, 0.85, 0.85, 1.0);
-	glClearColor(0.471, 0.318, 0.663, 1.0);
+	glClearColor(0.471, 0.318, 0.663, 1.0); // Royal purple
 
 	createShaderProgram();
 
@@ -72,6 +101,10 @@ void A3::init()
 	enableVertexShaderInputSlots();
 
 	processLuaSceneFile(m_luaSceneFile);
+
+	initTreeInitialTransformations(m_rootNode);
+
+	getAllJoints();
 
 	// Load and decode all .obj files at once here.  You may add additional .obj files to
 	// this list in order to support rendering additional mesh types.  All vertex
@@ -306,22 +339,27 @@ void A3::uploadCommonSceneUniforms() {
 		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(m_perspective));
 		CHECK_GL_ERRORS;
 
+		location = m_shader.getUniformLocation("picking");
+		glUniform1i(location, m_picking ? 1 : 0);
 
-		//-- Set LightSource uniform for the scene:
+		if (!m_picking)
 		{
+			//-- Set LightSource uniform for the scene:
+			//{
 			location = m_shader.getUniformLocation("light.position");
 			glUniform3fv(location, 1, value_ptr(m_light.position));
 			location = m_shader.getUniformLocation("light.rgbIntensity");
 			glUniform3fv(location, 1, value_ptr(m_light.rgbIntensity));
 			CHECK_GL_ERRORS;
-		}
+			//}
 
-		//-- Set background light ambient intensity
-		{
+			//-- Set background light ambient intensity
+			//{
 			location = m_shader.getUniformLocation("ambientIntensity");
 			vec3 ambientIntensity(0.25f);
 			glUniform3fv(location, 1, value_ptr(ambientIntensity));
 			CHECK_GL_ERRORS;
+			//}
 		}
 	}
 	m_shader.disable();
@@ -439,14 +477,85 @@ void A3::guiLogic()
 
 		switch(m_currentMenu) {
 			case (MenuGui::APPLICATION):
+				if( ImGui::Button( "Reset Position (I)" ) )
+				{
+					m_rootNode->localTranslations = m_rootNode->initialLocalTranslations;
+					m_rootNode->set_local_transform();
+				}
+				if( ImGui::Button( "Reset Orientation (O)" ) )
+				{
+					m_rootNode->localRotations = m_rootNode->initialLocalRotations;
+					m_rootNode->localViewRotations = glm::mat4();
+					m_rootNode->set_local_transform();
+				}
+				if( ImGui::Button( "Reset Joints (S)" ) )
+				{
+					while (m_currentUndoIndex > -1)
+					{
+						for (auto &command : m_undoStack[m_currentUndoIndex])
+						{
+							command.undo();
+						}
+						m_currentUndoIndex--;
+					}
+					m_undoStack.clear();
+					m_currentUndoFrame.clear();
+				}
+				if( ImGui::Button( "Reset All (A)" ) )
+				{
+					m_rootNode->localTranslations = m_rootNode->initialLocalTranslations;
+					m_rootNode->localRotations = m_rootNode->initialLocalRotations;
+					m_rootNode->localViewRotations = glm::mat4();
+					m_rootNode->set_local_transform();
+
+					while (m_currentUndoIndex > -1)
+					{
+						for (auto &command : m_undoStack[m_currentUndoIndex])
+						{
+							command.undo();
+						}
+						m_currentUndoIndex--;
+					}
+					m_undoStack.clear();
+					m_currentUndoFrame.clear();
+				}
 				if( ImGui::Button( "Quit Application (Q)" ) )
 				{
 					glfwSetWindowShouldClose(m_window, GL_TRUE);
 				}
 				break;
 			case (MenuGui::EDIT):
+				if( ImGui::Button( "Undo (U)" ) )
+				{
+					if (m_currentUndoIndex == -1)
+					{
+						m_showUndoMessage = true;
+					} else {
+						m_showUndoMessage = false;
+						for (auto &command : m_undoStack[m_currentUndoIndex])
+						{
+							command.undo();
+						}
+						m_currentUndoIndex--;
+					}
+				}
+				if( ImGui::Button( "Redo (R)" ) )
+				{
+					if (m_currentUndoIndex == int(m_undoStack.size()) - 1)
+					{
+						m_showRedoMessage = true;
+					}  else {
+						m_showRedoMessage = false;
+						m_currentUndoIndex++;
+						for (auto &command : m_undoStack[m_currentUndoIndex])
+						{
+							command.redo();
+						}
+					}
+				}
 				break;
 			case (MenuGui::OPTIONS):
+				if (ImGui::Checkbox("Circle (C)", &m_showCircle)) {}
 				if (ImGui::Checkbox("Z-buffer (Z)", &m_useZBuffer)) {}
 				if (ImGui::Checkbox("Backface Culling (B)", &m_useBackfaceCulling)) {}
 				if (ImGui::Checkbox("Frontface Culling (F)", &m_useFrontfaceCulling)) {}
@@ -456,6 +565,14 @@ void A3::guiLogic()
 		}
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
+		if (m_showUndoMessage)
+		{
+			ImGui::Text( "You cannot UNDO any more!");
+		}
+		if (m_showRedoMessage)
+		{
+			ImGui::Text( "You cannot REDO any more!");
+		}
 
 	ImGui::End();
 }
@@ -498,7 +615,8 @@ static void updateShaderUniforms(
 static void updateShaderUniforms(
 		const ShaderProgram & shader,
 		const SceneNode & node,
-		const glm::mat4 & viewMatrix
+		const glm::mat4 & viewMatrix,
+		bool picking
 ) {
 
 	shader.enable();
@@ -517,12 +635,21 @@ static void updateShaderUniforms(
 
 		if (node.m_nodeType == NodeType::GeometryNode)
 		{
-			//-- Set Material values:
-			location = shader.getUniformLocation("material.kd");
-			const GeometryNode *geometryNode = static_cast<const GeometryNode *>(&node);
-			vec3 kd = geometryNode->material.kd;
-			glUniform3fv(location, 1, value_ptr(kd));
-			CHECK_GL_ERRORS;
+			if (picking)
+			{
+				glm::vec3 rgb = node.getSelectionRGBColor();
+
+				location = shader.getUniformLocation("material.kd");
+				glUniform3f(location, float(rgb.r)/255.0f, float(rgb.g)/255.0f, float(rgb.b)/255.0f);
+				CHECK_GL_ERRORS;
+			} else {
+				//-- Set Material values:
+				location = shader.getUniformLocation("material.kd");
+				const GeometryNode *geometryNode = static_cast<const GeometryNode *>(&node);
+				vec3 kd = geometryNode->material.kd;
+				glUniform3fv(location, 1, value_ptr(kd));
+				CHECK_GL_ERRORS;
+			}	
 		}
 	}
 	shader.disable();
@@ -536,20 +663,26 @@ static void updateShaderUniforms(
 void A3::draw() {
 
 	// Enable z-buffer if the option is turned on
-	if (m_useZBuffer) {
+	if (m_useZBuffer)
+	{
 		glEnable( GL_DEPTH_TEST );
 	}
 
 	// Check for culling
-	if (!(m_useBackfaceCulling || m_useFrontfaceCulling)) {
+	if (!(m_useBackfaceCulling || m_useFrontfaceCulling))
+	{
 		glDisable( GL_CULL_FACE );
-	} else {
+	} else
+	{
 		glEnable( GL_CULL_FACE );
-		if (m_useBackfaceCulling && m_useFrontfaceCulling) {
+		if (m_useBackfaceCulling && m_useFrontfaceCulling)
+		{
 			glCullFace( GL_FRONT_AND_BACK );
-		} else if (m_useBackfaceCulling) {
+		} else if (m_useBackfaceCulling)
+		{
 			glCullFace( GL_BACK );
-		} else {
+		} else
+		{
 			glCullFace( GL_FRONT );
 		}
 	}
@@ -559,18 +692,31 @@ void A3::draw() {
 
 	// Disable z-buffer for the trackball because it "supersedes" the scene
 	glDisable( GL_DEPTH_TEST );
-	renderArcCircle();
+	if (m_showCircle)
+	{
+		renderArcCircle();
+	}	
 }
 
 
 //----------------------------------------------------------------------------------------
-void A3::recurseRenderNode(const SceneNode &node)
+void A3::recurseRenderNode(SceneNode &node)
 {
-	for (const SceneNode * child : node.children) {
-		updateShaderUniforms(m_shader, *child, m_view);
+	for (SceneNode * child : node.children) {
+		updateShaderUniforms(m_shader, *child, m_view, m_picking);
 		if (child->m_nodeType == NodeType::GeometryNode)
 		{
-			const GeometryNode * geometryNode = static_cast<const GeometryNode *>(child);
+			if (node.m_nodeType != NodeType::JointNode || m_currentInteractionMode != InteractionMode::JOINTS)
+			{
+				child->isSelected = false; // Do not allow picking unmoveable geometry nodes. Also reset colors on switching back to Position mode.
+			}
+			GeometryNode * geometryNode = static_cast<GeometryNode *>(child);
+			if (geometryNode->isSelected)
+			{
+				geometryNode->material.kd = {1.0, 0.0, 0.0};
+			} else {
+				geometryNode->material.kd = geometryNode->originalMaterial.kd;
+			}
 
 
 			// Get the BatchInfo corresponding to the GeometryNode's unique MeshId.
@@ -587,7 +733,7 @@ void A3::recurseRenderNode(const SceneNode &node)
 }
 
 //----------------------------------------------------------------------------------------
-void A3::renderSceneGraph(const SceneNode & root)
+void A3::renderSceneGraph(SceneNode & root)
 {
 	// Bind the VAO once here, and reuse for all GeometryNode rendering below.
 	glBindVertexArray(m_vao_meshData);
@@ -617,6 +763,96 @@ void A3::renderArcCircle() {
 
 	glBindVertexArray(0);
 	CHECK_GL_ERRORS;
+}
+
+//----------------------------------------------------------------------------------------
+// Apply joint rotations to each joint in the tree that has selected geometry node children.
+void A3::applyJointRotations(SceneNode *node, float angleOfRotation)
+{
+	bool hasRotated = false; // Set to true so it doesn't rotate twice just because two of its kids are selected.
+	// This should never happen anyways because every joint node has at max 1 child, but whatever
+	for (auto *child : node->children)
+	{
+		// Redundant check (since only geometry node children of joint nodes can be selected), but just in case
+		if (node->m_nodeType == NodeType::JointNode && child->isSelected && child->m_nodeType == NodeType::GeometryNode && !hasRotated) 
+		{
+			JointNode *joint = static_cast<JointNode *>(node);
+			if (joint->m_name == "head_joint" && m_isRightButtonPressed)
+			{
+				// Handle this rotation in the right click
+				continue;
+			}
+			if (joint->m_name == "left_wing_joint") // lol, just looks cooler that way
+			{
+				joint->rotate_joint(-angleOfRotation);
+			} else {
+				joint->rotate_joint(angleOfRotation);
+			}
+			hasRotated = true;
+		}
+		applyJointRotations(child, angleOfRotation);
+	}
+}
+
+//----------------------------------------------------------------------------------------
+// Wrapper around applyJointRotations so we can pass the root sharedNode
+void A3::applyJointRotationsToTree(std::shared_ptr<SceneNode> root, float angleOfRotation)
+{
+	for (auto *child : root->children)
+	{
+		applyJointRotations(child, angleOfRotation);
+	}
+}
+
+//----------------------------------------------------------------------------------------
+// Wrapper around applyJointRotationsToHead so we can pass the root sharedNode
+void A3::applyJointRotationsToHead(SceneNode* node, float angleOfRotation)
+{
+	for (auto *child : node->children)
+	{
+		if (node->m_name == "head_joint" && node->m_nodeType == NodeType::JointNode && child->isSelected)
+		{
+			JointNode *joint = static_cast<JointNode *>(node);
+			joint->rotate_joint(angleOfRotation);
+			return;
+		} else {
+			applyJointRotationsToHead(child, angleOfRotation);
+		}
+		
+	}
+}
+
+//----------------------------------------------------------------------------------------
+// Wrapper around applyJointRotationsToHead so we can pass the root sharedNode
+void A3::wrapperApplyJointRotationsToHead(std::shared_ptr<SceneNode> root, float angleOfRotation)
+{
+	for (auto *child : root->children)
+	{
+		applyJointRotationsToHead(child, angleOfRotation);
+	}
+}
+
+//----------------------------------------------------------------------------------------
+void recurseGetAllJoints(SceneNode *node, std::vector<JointNode *>& outVec)
+{
+	for (auto *child : node->children)
+	{
+		if (node->m_nodeType == NodeType::JointNode)
+		{
+			JointNode *joint = static_cast<JointNode *>(node);
+			outVec.push_back(joint);
+		}
+		recurseGetAllJoints(child, outVec);
+	}
+}
+
+//----------------------------------------------------------------------------------------
+void A3::getAllJoints()
+{
+	for (auto *child : m_rootNode->children)
+	{
+		recurseGetAllJoints(child, m_allJointNodes);
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -710,33 +946,34 @@ bool A3::mouseMoveEvent (
 					// if zCross > 0, then current is clockwise from last, and we need a negative angle rotation
 					// if zCross < 0, then we need positive angle rotation.
 
-					float lengthOfCurrVec = glm::sqrt(currentPosXSquaredPlusYSquared);
-					float lengthOfLastVec = glm::sqrt(lastPosXSquaredPlusYSquared);
-					float currentPosZ = 0.0f;
-					float lastPosZ = 0.0f;
-					lastCursorPosVecOnTrackball /= lengthOfLastVec;
-					currentCursorPosVecOnTrackball /= lengthOfCurrVec;
+					float cosAngleOfRotation = (glm::dot(lastCursorPosVecOnTrackball, currentCursorPosVecOnTrackball)) / 
+						(glm::length(lastCursorPosVecOnTrackball) * glm::length(currentCursorPosVecOnTrackball));
+					float angleOfRotation = glm::acos(glm::clamp(cosAngleOfRotation, -1.0f, 1.0f));
 
-					glm::vec3 axisOfRotation = glm::cross(glm::vec3(lastCursorPosVecOnTrackball, lastPosZ), glm::vec3(currentCursorPosVecOnTrackball, currentPosZ));
-					axisOfRotation.z = -axisOfRotation.z;
-					float angleOfRotation = glm::length(axisOfRotation);
-					if (0.000001f < angleOfRotation || -0.000001f > angleOfRotation)
-					{
-						m_rootNode->rotate(axisOfRotation/angleOfRotation, angleOfRotation);
-					}
-
-					// float cosAngleOfRotation = (glm::dot(lastCursorPosVecOnTrackball, currentCursorPosVecOnTrackball)) / 
-					// 	(glm::length(lastCursorPosVecOnTrackball) * glm::length(currentCursorPosVecOnTrackball));
-					// float angleOfRotation = glm::acos(glm::clamp(cosAngleOfRotation, -1.0f, 1.0f));
-
-					// float zCross = lastCursorPosVecOnTrackball.x * currentCursorPosVecOnTrackball.y - lastCursorPosVecOnTrackball.y * currentCursorPosVecOnTrackball.x;
-					// angleOfRotation = (zCross < 0) ? angleOfRotation : -angleOfRotation;
-					// m_rootNode->rotateAboutView(glm::vec3(0,0,1), angleOfRotation); 
+					float zCross = lastCursorPosVecOnTrackball.x * currentCursorPosVecOnTrackball.y - lastCursorPosVecOnTrackball.y * currentCursorPosVecOnTrackball.x;
+					angleOfRotation = (zCross < 0) ? angleOfRotation : -angleOfRotation;
+					m_rootNode->rotateAboutView(glm::vec3(0,0,1), angleOfRotation); 
 				}
 				eventHandled = true;
 			}
 			break;
 		case InteractionMode::JOINTS:
+			// Change Angle of Selected Joints
+			if (m_isMiddleButtonPressed)
+			{
+				float angleOfRotation = -differenceY;
+				// Recurse through tree, see if child is selected - if so, (redundantly?)
+				// check if current node is a joint node, and if so, apply rotation.
+				applyJointRotationsToTree(m_rootNode, angleOfRotation);
+				eventHandled = true;
+			}
+			// Rotate head left to right ONLY if it's selected
+			if (m_isRightButtonPressed)
+			{
+				float angleOfRotation = -differenceY;
+				wrapperApplyJointRotationsToHead(m_rootNode, angleOfRotation);
+				eventHandled = true;
+			}
 			break;
 		default:
 			break;
@@ -768,11 +1005,35 @@ bool A3::mouseButtonInputEvent (
 		if (button == GLFW_MOUSE_BUTTON_MIDDLE)
 		{
 			m_isMiddleButtonPressed = true;
+			if (m_currentInteractionMode == InteractionMode::JOINTS)
+			{
+				std::vector<JointRotationCommand> commands;
+				for (auto *node : m_allJointNodes)
+				{
+					JointRotationCommand newCommand = JointRotationCommand(node);
+					commands.push_back(newCommand);
+				}
+				m_currentUndoFrame = commands;
+			}
 			eventHandled = true;
 		}
 		if (button == GLFW_MOUSE_BUTTON_RIGHT)
 		{
 			m_isRightButtonPressed = true;
+			if (m_currentInteractionMode == InteractionMode::JOINTS && !m_isMiddleButtonPressed)
+			{
+				m_handleRightClickJointRotation = true;
+				std::vector<JointRotationCommand> commands;
+				for (auto *node : m_allJointNodes)
+				{
+					JointRotationCommand newCommand = JointRotationCommand(node);
+					commands.push_back(newCommand);
+				}
+				m_currentUndoFrame = commands;
+			}  else if (m_currentInteractionMode == InteractionMode::JOINTS && m_isMiddleButtonPressed)
+			{
+				m_handleRightClickJointRotation = false;
+			}
 			eventHandled = true;
 		}
 	}
@@ -781,16 +1042,82 @@ bool A3::mouseButtonInputEvent (
 		if (button == GLFW_MOUSE_BUTTON_LEFT)
 		{
 			m_isLeftButtonPressed = false;
+			// Picking
+			if (m_currentInteractionMode == InteractionMode::JOINTS)
+			{
+				double xPos, yPos;
+				glfwGetCursorPos(m_window, &xPos, &yPos);
+
+				m_picking = true;
+
+				uploadCommonSceneUniforms();
+				glClearColor(1.0, 1.0, 1.0, 1.0 );
+				glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+				glClearColor(0.471, 0.318, 0.663, 1.0); // Royal purple
+
+				draw();
+
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+				GLubyte pixelData[4] = {0, 0, 0, 0};
+
+				glReadBuffer( GL_BACK );
+
+				xPos *= double(m_framebufferWidth) / double(m_windowWidth);
+				yPos = m_windowHeight - yPos;
+				yPos *= double(m_framebufferHeight) / double(m_windowHeight);
+
+				glReadPixels( int(xPos), int(yPos), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixelData );
+				CHECK_GL_ERRORS;
+
+				int pickedId = pixelData[0] + (pixelData[1] << 8) + (pixelData[2] << 16);
+
+				if (pickedId < SceneNode::totalSceneNodes())
+				{
+					SceneNode::selectionMap[pickedId]->toggleSelection();
+				}
+
+				m_picking = false;
+
+				CHECK_GL_ERRORS;
+			}
 			eventHandled = true;
 		}
 		if (button == GLFW_MOUSE_BUTTON_MIDDLE)
 		{
 			m_isMiddleButtonPressed = false;
+			if (m_currentInteractionMode == InteractionMode::JOINTS && m_handleRightClickJointRotation)
+			{
+				for (auto &command : m_currentUndoFrame)
+				{
+					command.commit(command.m_node->m_currentAngle);
+				}
+				if (m_undoStack.size() > m_currentUndoIndex + 1)
+				{
+					m_undoStack.erase(m_undoStack.begin() + m_currentUndoIndex + 1, m_undoStack.end());
+				}
+				m_currentUndoIndex++;
+				m_undoStack.push_back(m_currentUndoFrame);
+			}
+			
 			eventHandled = true;
 		}
 		if (button == GLFW_MOUSE_BUTTON_RIGHT)
 		{
 			m_isRightButtonPressed = false;
+			if (m_currentInteractionMode == InteractionMode::JOINTS)
+			{
+				for (auto &command : m_currentUndoFrame)
+				{
+					command.commit(command.m_node->m_currentAngle);
+				}
+				if (m_undoStack.size() > m_currentUndoIndex + 1)
+				{
+					m_undoStack.erase(m_undoStack.begin() + m_currentUndoIndex + 1, m_undoStack.end());
+				}
+				m_currentUndoIndex++;
+				m_undoStack.push_back(m_currentUndoFrame);
+			}
 			eventHandled = true;
 		}
 	}
@@ -863,6 +1190,11 @@ bool A3::keyInputEvent (
 			m_useFrontfaceCulling = !m_useFrontfaceCulling;
 			eventHandled = true;
 		}
+		if (key == GLFW_KEY_C)
+		{
+			m_showCircle = !m_showCircle;
+			eventHandled = true;
+		}
 		if (key == GLFW_KEY_P)
 		{
 			m_currentInteractionMode = InteractionMode::POSITION_ORIENTATION;
@@ -872,6 +1204,76 @@ bool A3::keyInputEvent (
 		{
 			m_currentInteractionMode = InteractionMode::JOINTS;
 			eventHandled = true;
+		}
+		if (key == GLFW_KEY_I)
+		{
+			m_rootNode->localTranslations = m_rootNode->initialLocalTranslations;
+			m_rootNode->set_local_transform();
+		}
+		if (key == GLFW_KEY_O)
+		{
+			m_rootNode->localRotations = m_rootNode->initialLocalRotations;
+			m_rootNode->localViewRotations = glm::mat4();
+			m_rootNode->set_local_transform();
+		}
+		if (key == GLFW_KEY_A)
+		{
+			m_rootNode->localTranslations = m_rootNode->initialLocalTranslations;
+			m_rootNode->localRotations = m_rootNode->initialLocalRotations;
+			m_rootNode->localViewRotations = glm::mat4();
+			m_rootNode->set_local_transform();
+
+			while (m_currentUndoIndex > -1)
+			{
+				for (auto &command : m_undoStack[m_currentUndoIndex])
+				{
+					command.undo();
+				}
+				m_currentUndoIndex--;
+			}
+			m_undoStack.clear();
+			m_currentUndoFrame.clear();
+		}
+		if (key == GLFW_KEY_S)
+		{
+			while (m_currentUndoIndex > -1)
+			{
+				for (auto &command : m_undoStack[m_currentUndoIndex])
+				{
+					command.undo();
+				}
+				m_currentUndoIndex--;
+			}
+			m_undoStack.clear();
+			m_currentUndoFrame.clear();
+		}
+		if (key == GLFW_KEY_U)
+		{
+			if (m_currentUndoIndex == -1)
+			{
+				m_showUndoMessage = true;
+			} else {
+				m_showUndoMessage = false;
+				for (auto &command : m_undoStack[m_currentUndoIndex])
+				{
+					command.undo();
+				}
+				m_currentUndoIndex--;
+			}
+		}
+		if (key == GLFW_KEY_R)
+		{
+			if (m_currentUndoIndex == int(m_undoStack.size()) - 1)
+			{
+				m_showRedoMessage = true;
+			}  else {
+				m_showRedoMessage = false;
+				m_currentUndoIndex++;
+				for (auto &command : m_undoStack[m_currentUndoIndex])
+				{
+					command.redo();
+				}
+			}
 		}
 	}
 	// Fill in with event handling code...

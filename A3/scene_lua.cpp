@@ -120,17 +120,24 @@ int gr_joint_cmd(lua_State* L)
 
   luaL_argcheck(L, luaL_len(L, 3) == 3, 3, "Three-tuple expected");
 
-  double x[3], y[3];
+  luaL_checktype(L, 4, LUA_TTABLE);
+
+  luaL_argcheck(L, luaL_len(L, 4) == 3, 4, "Three-tuple expected");
+
+  double x[3], y[3], z[3];
   for (int i = 1; i <= 3; i++) {
     lua_rawgeti(L, 2, i);
     x[i - 1] = luaL_checknumber(L, -1);
     lua_rawgeti(L, 3, i);
     y[i - 1] = luaL_checknumber(L, -1);
-    lua_pop(L, 2);
+    lua_rawgeti(L, 4, i);
+    z[i - 1] = luaL_checknumber(L, -1);
+    lua_pop(L, 3);
   }
 
   node->set_joint_x(x[0], x[1], x[2]);
   node->set_joint_y(y[0], y[1], y[2]);
+  node->set_joint_z(z[0], z[1], z[2]);
 
   data->node = node;
 
@@ -241,6 +248,10 @@ int gr_node_set_material_cmd(lua_State* L)
 	self->material.kd = material->kd;
 	self->material.ks = material->ks;
 	self->material.shininess = material->shininess;
+
+  self->originalMaterial.kd = material->kd;
+  self->originalMaterial.ks = material->ks;
+  self->originalMaterial.shininess = material->shininess;
 
   return 0;
 }

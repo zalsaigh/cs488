@@ -17,6 +17,9 @@ uniform mat4 Perspective;
 // transformed using this matrix instead of the ModelView matrix.
 uniform mat3 NormalMatrix;
 
+// For picking
+uniform bool picking;
+
 struct Material {
     vec3 kd;
 };
@@ -41,8 +44,11 @@ vec3 diffuseLighting(vec3 vertPosition, vec3 vertNormal) {
 
 void main() {
 	vec4 pos4 = vec4(position, 1.0);
-
-	vcolour = diffuseLighting((ModelView * pos4).xyz, normalize(NormalMatrix * normal));
+    if (picking) {
+        vcolour = material.kd;
+    } else {
+        vcolour = diffuseLighting((ModelView * pos4).xyz, normalize(NormalMatrix * normal));
+    }
 	
 	gl_Position = Perspective * ModelView * pos4;
 }

@@ -16,6 +16,7 @@ using namespace glm;
 
 // Static class variable
 unsigned int SceneNode::nodeInstanceCount = 0;
+std::unordered_map<unsigned int, SceneNode*> SceneNode::selectionMap;
 
 
 //---------------------------------------------------------------------------------------
@@ -26,13 +27,14 @@ SceneNode::SceneNode(const std::string& name)
 	invtrans(mat4()),
 	localTrans(mat4()),
 	invLocalTrans(mat4()),
-	localRotationsAndScales(mat4()),
+	localRotations(mat4()),
+	localScales(mat4()),
 	localTranslations(mat4()),
 	localViewRotations(mat4()),
 	isSelected(false),
 	m_nodeId(nodeInstanceCount++)
 {
-
+	SceneNode::selectionMap[m_nodeId] = this;
 }
 
 //---------------------------------------------------------------------------------------
@@ -42,7 +44,12 @@ SceneNode::SceneNode(const SceneNode & other)
 	  m_name(other.m_name),
 	  trans(other.trans),
 	  invtrans(other.invtrans),
-	  localTrans(other.localTrans)
+	  localTrans(other.localTrans),
+	  invLocalTrans(other.invLocalTrans),
+	  localRotations(other.localRotations),
+	  localScales(other.localScales),
+	  localTranslations(other.localTranslations),
+	  localViewRotations(other.localViewRotations)
 {
 	for(SceneNode * child : other.children) {
 		this->children.push_front(new SceneNode(*child));
@@ -66,6 +73,11 @@ void SceneNode::set_transform(const glm::mat4& m) {
 void SceneNode::set_local_transform(const glm::mat4& m) {
 	localTrans = m;
 	invLocalTrans = glm::inverse(localTrans);
+}
+
+//---------------------------------------------------------------------------------------
+void SceneNode::set_local_transform() {
+	set_local_transform(localViewRotations * localTranslations * localRotations * localScales);
 }
 
 //---------------------------------------------------------------------------------------
@@ -115,43 +127,50 @@ void SceneNode::rotate(char axis, float angle) {
 		default:
 			break;
 	}
-	localRotationsAndScales = glm::rotate(degreesToRadians(angle), rot_axis) * localRotationsAndScales;
-	// localTrans = localRotationsAndScales * localTrans;
-	set_local_transform(localViewRotations * localTranslations * localRotationsAndScales);
+	localRotations = glm::rotate(degreesToRadians(angle), rot_axis) * localRotations;
+	set_local_transform();
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::rotate(const glm::vec3& axisOfRotation, float angleInRadians) {
-	localRotationsAndScales = glm::rotate(angleInRadians, axisOfRotation) * localRotationsAndScales;
-	// localTrans = localTrans * glm::rotate(angleInRadians, axisOfRotation);
-	set_local_transform(localViewRotations * localTranslations * localRotationsAndScales);
+	localRotations = glm::rotate(angleInRadians, axisOfRotation) * localRotations;
+	set_local_transform();
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::rotateAboutView(const glm::vec3& axisOfRotation, float angleInRadians) {
-	// localTrans = glm::rotate(angleInRadians, axisOfRotation) * localTrans;
 	localViewRotations = glm::rotate(angleInRadians, axisOfRotation) * localViewRotations;
-	set_local_transform(localViewRotations * localTranslations * localRotationsAndScales);
+	set_local_transform();
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::scale(const glm::vec3 & amount) {
-	// localTrans = localTrans * glm::scale(amount);
-	localRotationsAndScales = localRotationsAndScales * ::scale(amount);
-	set_local_transform(localViewRotations * localTranslations * localRotationsAndScales);
+	localScales = glm::scale(amount) * localScales;
+	set_local_transform();
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::translate(const glm::vec3& amount) {
-	// localTrans =  glm::translate(amount) * localTrans;
 	localTranslations = glm::translate(amount) * localTranslations;
-	set_local_transform(localViewRotations * localTranslations * localRotationsAndScales);
+	set_local_transform();
 }
 
 
 //---------------------------------------------------------------------------------------
-int SceneNode::totalSceneNodes() const {
+int SceneNode::totalSceneNodes() {
 	return nodeInstanceCount;
+}
+
+//---------------------------------------------------------------------------------------
+void SceneNode::toggleSelection() {
+	isSelected = !isSelected;
+}
+
+//---------------------------------------------------------------------------------------
+const glm::vec3 SceneNode::getSelectionRGBColor() const{
+	return glm::vec3((m_nodeId & 0x000000FF) >> 0, 
+					 (m_nodeId & 0x0000FF00) >> 8,
+					 (m_nodeId & 0x00FF0000) >> 16);
 }
 
 //---------------------------------------------------------------------------------------

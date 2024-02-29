@@ -28,20 +28,24 @@ rootNode:add_child(torsoMesh)
 --------------------------------------------------------------------------------
 -- Wings
 
-rightWingJoint = gr.joint('right_wing_joint', {0, 0, 90}, {0, 0, 0})
+rightWingJoint = gr.joint('right_wing_joint', {0, 0, 130}, {0, 0, 0}, {0, 0, 0})
+rightWingJoint:translate(0.89, 1.4, 0.5)
 rootNode:add_child(rightWingJoint)
 
 rightWingMesh = gr.mesh('wing', 'right_wing')
-rightWingMesh:translate(-0.47, 2.08, 0.5)
+-- rightWingMesh:translate(-0.47, 2.08, 0.5) -- Value without the joint
+rightWingMesh:translate(-1.36, 0.68, 0.0)
 rightWingMesh:set_material(wingMaterial)
 
 rightWingJoint:add_child(rightWingMesh)
 
-leftWingJoint = gr.joint('left_wing_joint', {-90, 0, 0}, {0, 0, 0})
+leftWingJoint = gr.joint('left_wing_joint', {-130, 0, 0}, {0, 0, 0}, {0, 0, 0})
+leftWingJoint:translate(0.89, 1.4, -0.5)
 rootNode:add_child(leftWingJoint)
 
 leftWingMesh = gr.mesh('wing', 'left_wing')
-leftWingMesh:translate(-0.47, 2.08, -0.5)
+-- leftWingMesh:translate(-0.47, 2.08, -0.5) -- Value without the joint
+leftWingMesh:translate(-1.36, 0.68, 0.0)
 leftWingMesh:set_material(wingMaterial)
 
 leftWingJoint:add_child(leftWingMesh)
@@ -49,11 +53,13 @@ leftWingJoint:add_child(leftWingMesh)
 --------------------------------------------------------------------------------
 -- Tail
 
-tailJoint = gr.joint('tail_joint', {-90, 0, 90}, {0, 0, 0})
+tailJoint = gr.joint('tail_joint', {-60, 0, 60}, {0, 0, 0}, {0, 0, 0})
+tailJoint:translate(-2.3, 0.52, 0.0)
 rootNode:add_child(tailJoint)
 
 tailMesh = gr.mesh("tail", "tail")
-tailMesh:translate(-2.8, 0.0, 0.0)
+-- tailMesh:translate(-2.8, 0.0, 0.0) -- Value without joint
+tailMesh:translate(-0.5, -0.52, 0.0)
 tailMesh:set_material(bullMaterial)
 
 tailJoint:add_child(tailMesh)
@@ -71,18 +77,20 @@ tailMesh:add_child(tailHairMesh)
 -- Neck
 
 neckMesh = gr.mesh('neck', 'neck')
-neckMesh:translate(2.38, 1.24, 0.0)
-neckMesh:set_material(bullMaterial)
+neckMesh:translate(2.4, 1.24, 0.0)
+neckMesh:set_material(skinMaterial)
 
 torsoMesh:add_child(neckMesh)
 --------------------------------------------------------------------------------
 -- Head
 
-headJoint = gr.mesh("headJoint", {0, 0, 0}, {-45, 0, 45})
+headJoint = gr.joint("head_joint", {0, 0, 0}, {-20, 0, 20}, {0, 0, 0})
+headJoint:translate(1.99, 1.69, 0.0)
 rootNode:add_child(headJoint)
 
 headMesh = gr.mesh("head", "head")
-headMesh:translate(0.20, 0.60, 0.0)
+-- headMesh:translate(0.20, 0.60, 0.0) -- Value with neck mesh parent
+headMesh:translate(0.59, 0.15, 0.0)
 headMesh:set_material(skinMaterial)
 
 headJoint:add_child(headMesh)
@@ -155,29 +163,34 @@ upperRightFrontLegBallMesh:set_material(bullMaterial)
 
 torsoMesh:add_child(upperRightFrontLegBallMesh)
 
-upperRightFrontLegJoint = gr.joint('upper_right_front_leg_joint', {0, 0, 90}, {0, 0, 90})
+upperRightFrontLegJoint = gr.joint('upper_right_front_leg_joint', {0, 0, 0}, {0, 0, 0}, {-25, 0, 45})
+upperRightFrontLegJoint:translate(1.6, -0.36, 0.81)
 rootNode:add_child(upperRightFrontLegJoint)
 
 upperRightFrontLegMesh = gr.mesh("upper_leg", "upper_right_front_leg")
-upperRightFrontLegMesh:translate(0.0, -0.61, 0.0)
+upperRightFrontLegMesh:translate(0.0, -0.61, 0.0) -- No difference between joint parent and mesh parent
 upperRightFrontLegMesh:set_material(bullMaterial)
 
 upperRightFrontLegJoint:add_child(upperRightFrontLegMesh)
 
-lowerRightFrontLegJoint = gr.joint('lower_right_front_leg_joint', {0, 0, 90}, {0, 0, 90})
+lowerRightFrontLegJoint = gr.joint('lower_right_front_leg_joint', {0, 0, 0}, {0, 0, 0}, {-75, 0, 0})
+lowerRightFrontLegJoint:translate(0.0, -1.06, 0.0)
 upperRightFrontLegJoint:add_child(lowerRightFrontLegJoint)
 
 lowerRightFrontLegMesh = gr.mesh("lower_leg", "lower_right_front_leg")
-lowerRightFrontLegMesh:translate(0.0, -1.1, 0.0)
+-- lowerRightFrontLegMesh:translate(0.0, -1.1, 0.0) -- This translation is with the upper leg mesh as parent
+lowerRightFrontLegMesh:translate(0.0, -0.65, 0.0)
 lowerRightFrontLegMesh:set_material(bullMaterial)
 
 lowerRightFrontLegJoint:add_child(lowerRightFrontLegMesh)
 
-rightFrontHoofJoint = gr.joint('right_front_hoof_joint', {0, 0, 90}, {0, 0, 90})
+rightFrontHoofJoint = gr.joint('right_front_hoof_joint', {0, 0, 0}, {0, 0, 0}, {-20, 0, 20})
+rightFrontHoofJoint:translate(0.0, -0.93, 0.0)
 lowerRightFrontLegJoint:add_child(rightFrontHoofJoint)
 
 rightFrontHoofMesh = gr.mesh("hoof", "right_front_hoof")
-rightFrontHoofMesh:translate(0.0, -0.53, 0.0)
+-- rightFrontHoofMesh:translate(0.0, -0.53, 0.0) -- This translation is with lower leg mesh as parent
+rightFrontHoofMesh:translate(0.0, -0.25, 0.0)
 rightFrontHoofMesh:set_material(boneMaterial)
 
 rightFrontHoofJoint:add_child(rightFrontHoofMesh)
@@ -190,29 +203,34 @@ upperLeftFrontLegBallMesh:set_material(bullMaterial)
 
 torsoMesh:add_child(upperLeftFrontLegBallMesh)
 
-upperLeftFrontLegJoint = gr.joint("upper_left_front_leg_joint", {0, 0, 90}, {0, 0, 0})
+upperLeftFrontLegJoint = gr.joint("upper_left_front_leg_joint", {0, 0, 0}, {0, 0, 0}, {-25, 0, 45})
+upperLeftFrontLegJoint:translate(1.6, -0.36, -0.81)
 rootNode:add_child(upperLeftFrontLegJoint)
 
 upperLeftFrontLegMesh = gr.mesh("upper_leg", "upper_left_front_leg")
-upperLeftFrontLegMesh:translate(0.0, -0.61, 0.0)
+upperLeftFrontLegMesh:translate(0.0, -0.61, 0.0) -- No difference between joint parent and mesh parent
 upperLeftFrontLegMesh:set_material(bullMaterial)
 
 upperLeftFrontLegJoint:add_child(upperLeftFrontLegMesh)
 
-lowerLeftFrontLegJoint = gr.joint("lower_left_front_leg_joint", {0, 0, 90}, {0, 0, 0})
+lowerLeftFrontLegJoint = gr.joint("lower_left_front_leg_joint", {0, 0, 0}, {0, 0, 0}, {-75, 0, 0})
+lowerLeftFrontLegJoint:translate(0.0, -1.06, 0.0)
 upperLeftFrontLegJoint:add_child(lowerLeftFrontLegJoint)
 
 lowerLeftFrontLegMesh = gr.mesh("lower_leg", "lower_left_front_leg")
-lowerLeftFrontLegMesh:translate(0.0, -1.1, 0.0)
+-- lowerLeftFrontLegMesh:translate(0.0, -1.1, 0.0) -- This translation is with the upper leg mesh as parent
+lowerLeftFrontLegMesh:translate(0.0, -0.65, 0.0)
 lowerLeftFrontLegMesh:set_material(bullMaterial)
 
 lowerLeftFrontLegJoint:add_child(lowerLeftFrontLegMesh)
 
-leftFrontHoofJoint = gr.joint("left_front_hoof_joint", {0, 0, 90}, {0, 0, 0})
+leftFrontHoofJoint = gr.joint("left_front_hoof_joint", {0, 0, 0}, {0, 0, 0}, {-20, 0, 20})
+leftFrontHoofJoint:translate(0.0, -0.93, 0.0)
 lowerLeftFrontLegJoint:add_child(leftFrontHoofJoint)
 
 leftFrontHoofMesh = gr.mesh("hoof", "left_front_hoof")
-leftFrontHoofMesh:translate(0.0, -0.53, 0.0)
+-- leftFrontHoofMesh:translate(0.0, -0.53, 0.0) -- This translation is with lower leg mesh as parent
+leftFrontHoofMesh:translate(0.0, -0.25, 0.0)
 leftFrontHoofMesh:set_material(boneMaterial)
 
 leftFrontHoofJoint:add_child(leftFrontHoofMesh)
@@ -225,23 +243,37 @@ upperRightBackLegBallMesh:set_material(bullMaterial)
 
 torsoMesh:add_child(upperRightBackLegBallMesh)
 
+upperRightBackLegJoint = gr.joint("upper_right_back_leg_joint", {0, 0, 0}, {0, 0, 0}, {-45, 0, 25})
+upperRightBackLegJoint:translate(-1.9, -0.36, 0.81)
+rootNode:add_child(upperRightBackLegJoint)
+
 upperRightBackLegMesh = gr.mesh("upper_leg", "upper_right_back_leg")
-upperRightBackLegMesh:translate(0.0, -0.61, 0.0)
+upperRightBackLegMesh:translate(0.0, -0.61, 0.0) -- No difference between joint parent and mesh parent
 upperRightBackLegMesh:set_material(bullMaterial)
 
-upperRightBackLegBallMesh:add_child(upperRightBackLegMesh)
+upperRightBackLegJoint:add_child(upperRightBackLegMesh)
+
+lowerRightBackLegJoint = gr.joint("lower_right_back_leg_joint", {0, 0, 0}, {0, 0, 0}, {0, 0, 25})
+lowerRightBackLegJoint:translate(0.0, -1.06, 0.0)
+upperRightBackLegJoint:add_child(lowerRightBackLegJoint)
 
 lowerRightBackLegMesh = gr.mesh("lower_leg", "lower_right_back_leg")
-lowerRightBackLegMesh:translate(0.0, -1.1, 0.0)
+-- lowerRightBackLegMesh:translate(0.0, -1.1, 0.0) -- This translation is with the upper leg mesh as parent
+lowerRightBackLegMesh:translate(0.0, -0.65, 0.0)
 lowerRightBackLegMesh:set_material(bullMaterial)
 
-upperRightBackLegMesh:add_child(lowerRightBackLegMesh)
+lowerRightBackLegJoint:add_child(lowerRightBackLegMesh)
+
+rightBackHoofJoint = gr.joint("right_back_hoof", {0, 0, 0}, {0, 0, 0}, {-20, 0, 20})
+rightBackHoofJoint:translate(0.0, -0.93, 0.0)
+lowerRightBackLegJoint:add_child(rightBackHoofJoint)
 
 rightBackHoofMesh = gr.mesh("hoof", "right_back_hoof")
-rightBackHoofMesh:translate(0.0, -0.53, 0.0)
+-- rightBackHoofMesh:translate(0.0, -0.53, 0.0) -- This translation is with lower leg mesh as parent
+rightBackHoofMesh:translate(0.0, -0.25, 0.0)
 rightBackHoofMesh:set_material(boneMaterial)
 
-lowerRightBackLegMesh:add_child(rightBackHoofMesh)
+rightBackHoofJoint:add_child(rightBackHoofMesh)
 
 --------------------------------------------------------------------------------
 -- Left Back Leg
@@ -251,23 +283,37 @@ upperLeftBackLegBallMesh:set_material(bullMaterial)
 
 torsoMesh:add_child(upperLeftBackLegBallMesh)
 
+upperLeftBackLegJoint = gr.joint("upper_left_back_leg_joint", {0, 0, 0}, {0, 0, 0}, {-45, 0, 25})
+upperLeftBackLegJoint:translate(-1.9, -0.36, -0.81)
+rootNode:add_child(upperLeftBackLegJoint)
+
 upperLeftBackLegMesh = gr.mesh("upper_leg", "upper_left_back_leg")
-upperLeftBackLegMesh:translate(0.0, -0.61, 0.0)
+upperLeftBackLegMesh:translate(0.0, -0.61, 0.0) -- No difference between joint parent and mesh parent
 upperLeftBackLegMesh:set_material(bullMaterial)
 
-upperLeftBackLegBallMesh:add_child(upperLeftBackLegMesh)
+upperLeftBackLegJoint:add_child(upperLeftBackLegMesh)
+
+lowerLeftBackLegJoint = gr.joint("lower_left_back_leg_joint", {0, 0, 0}, {0, 0, 0}, {0, 0, 25})
+lowerLeftBackLegJoint:translate(0.0, -1.06, 0.0)
+upperLeftBackLegJoint:add_child(lowerLeftBackLegJoint)
 
 lowerLeftBackLegMesh = gr.mesh("lower_leg", "lower_left_back_leg")
-lowerLeftBackLegMesh:translate(0.0, -1.1, 0.0)
+-- lowerLeftBackLegMesh:translate(0.0, -1.1, 0.0) -- This translation is with the upper leg mesh as parent
+lowerLeftBackLegMesh:translate(0.0, -0.65, 0.0)
 lowerLeftBackLegMesh:set_material(bullMaterial)
 
-upperLeftBackLegMesh:add_child(lowerLeftBackLegMesh)
+lowerLeftBackLegJoint:add_child(lowerLeftBackLegMesh)
+
+leftBackHoofJoint = gr.joint("left_back_hoof_joint", {0, 0, 0}, {0, 0, 0}, {-20, 0, 20})
+leftBackHoofJoint:translate(0.0, -0.93, 0.0)
+lowerLeftBackLegJoint:add_child(leftBackHoofJoint)
 
 leftBackHoofMesh = gr.mesh("hoof", "left_back_hoof")
-leftBackHoofMesh:translate(0.0, -0.53, 0.0)
+-- leftBackHoofMesh:translate(0.0, -0.53, 0.0) -- This translation is with lower leg mesh as parent
+leftBackHoofMesh:translate(0.0, -0.25, 0.0)
 leftBackHoofMesh:set_material(boneMaterial)
 
-lowerLeftBackLegMesh:add_child(leftBackHoofMesh)
+leftBackHoofJoint:add_child(leftBackHoofMesh)
 
 -- Return the root with all of it's childern.  The SceneNode A3::m_rootNode will be set
 -- equal to the return value from this Lua script.

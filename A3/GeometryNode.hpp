@@ -12,6 +12,7 @@ public:
 	);
 
 	Material material;
+	Material originalMaterial;
 
 	// Mesh Identifier. This must correspond to an object name of
 	// a loaded .obj file.

@@ -8,7 +8,7 @@
 #include "cs488-framework/MeshConsolidator.hpp"
 
 #include "SceneNode.hpp"
-#include "Transformation.hpp"
+#include "JointNode.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -65,12 +65,18 @@ protected:
 
 	void initPerspectiveMatrix();
 	void uploadCommonSceneUniforms();
-	void recurseRenderNode(const SceneNode &node);
-	void renderSceneGraph(const SceneNode &node);
+	void recurseRenderNode(SceneNode &node);
+	void renderSceneGraph(SceneNode &node);
 	void renderArcCircle();
 
 	//-- Trackball methods
 	void updateTrackballDimensions();
+
+	//-- Joint Rotations
+	void applyJointRotations(SceneNode *node, float angleOfRotation);
+	void applyJointRotationsToTree(std::shared_ptr<SceneNode> root, float angleOfRotation); // Wrapper for root node
+	void applyJointRotationsToHead(SceneNode *node, float angleOfRotation);
+	void wrapperApplyJointRotationsToHead(std::shared_ptr<SceneNode> root, float angleOfRotation);
 
 	glm::mat4 m_perspective;
 	glm::mat4 m_view;
@@ -104,6 +110,11 @@ protected:
 	bool m_useZBuffer;
 	bool m_useBackfaceCulling;
 	bool m_useFrontfaceCulling;
+	bool m_showCircle;
+
+	// Booleans to show the undo and redo too far messages
+	bool m_showUndoMessage;
+	bool m_showRedoMessage;
 
 	// Variable for which GUI to show
 	MenuGui m_currentMenu;
@@ -125,6 +136,14 @@ protected:
 	glm::vec2 m_trackballCenter;
 
 	// For undo/redo stack
-	std::vector<Transformation> m_undoStack;
+	void getAllJoints();
+
+	std::vector<JointNode *> m_allJointNodes;
+	std::vector<std::vector<JointRotationCommand>> m_undoStack;
+	std::vector<JointRotationCommand> m_currentUndoFrame;
 	int m_currentUndoIndex;
+	bool m_handleRightClickJointRotation;
+
+	// Picking
+	bool m_picking;
 };
