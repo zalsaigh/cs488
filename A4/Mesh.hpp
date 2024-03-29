@@ -26,16 +26,22 @@ struct Triangle
 		, v2( pv2 )
 		, v3( pv3 )
 	{}
+
+	bool hit(const Ray &r, glm::vec3 vert1, glm::vec3 vert2, glm::vec3 vert3, float t_0, float t_1, HitRecord& rec) const;
 };
 
 // A polygonal mesh.
 class Mesh : public Primitive {
 public:
   Mesh( const std::string& fname );
+  ~Mesh();
   
 private:
 	std::vector<glm::vec3> m_vertices;
 	std::vector<Triangle> m_faces;
+	NonhierBox *m_boundingBox;
 
     friend std::ostream& operator<<(std::ostream& out, const Mesh& mesh);
+
+	virtual bool hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const override;
 };

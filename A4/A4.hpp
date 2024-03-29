@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 #include "SceneNode.hpp"
+#include "GeometryNode.hpp"
 #include "Light.hpp"
 #include "Image.hpp"
 
