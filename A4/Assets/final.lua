@@ -26,24 +26,25 @@ scene_root:add_child(s3)
 -- s3:set_material(mat2)
 s3:set_texture(basketballCourtTexture)
 
+-- b1 = gr.nh_box('b1', {-500, -225, -800}, 100)
 b1 = gr.nh_box('b1', {-500, -225, -800}, 100)
 scene_root:add_child(b1)
 b1:set_material(mat4)
 
 -- s4 = gr.nh_sphere('s4', {-100, 25, -300}, 50)
-s4 = gr.nh_sphere('s4', {-150, 225, 1300}, 100)
+s4 = gr.nh_sphere('s4', {-150, 50, 225}, 100)
 scene_root:add_child(s4)
 s4:set_material(mat3)
 
-s5 = gr.nh_sphere('s5', {400, 100, 1100}, 125)
+s5 = gr.nh_sphere('s5', {400, 50, 225}, 125)
 scene_root:add_child(s5)
 s5:set_material(mat1)
 
 -- A small stellated dodecahedron.
 
-steldodec = gr.mesh( 'dodec', 'smstdodeca.obj' )
-steldodec:set_material(mat3)
-scene_root:add_child(steldodec)
+-- steldodec = gr.mesh( 'dodec', 'smstdodeca.obj' )
+-- steldodec:set_material(mat3)
+-- scene_root:add_child(steldodec)
 
 -- white_light = gr.light({-100.0, 150.0, 400.0}, {0.9, 0.9, 0.9}, {1, 0, 0})
 skylight = gr.light({0, 500, 1200}, {0.53, 0.81, 0.92}, {1.0, 0.0, 0.0})
