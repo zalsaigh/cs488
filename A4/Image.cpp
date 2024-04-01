@@ -126,6 +126,35 @@ bool Image::savePng(const std::string & filename) const
 }
 
 //---------------------------------------------------------------------------------------
+bool Image::readPng(const std::string & filename)
+{
+	std::vector<unsigned char> image;
+  unsigned error = lodepng::decode(image, m_width, m_height, filename, LCT_RGB);
+
+  if(error) {
+		std::cerr << "decoder error " << error << ": " << lodepng_error_text(error)
+				<< std::endl;
+    return false;
+	}
+  size_t numElements = m_width * m_height * m_colorComponents;
+	m_data = new double[numElements];
+	memset(m_data, 0, numElements*sizeof(double));
+
+	double color;
+	for (uint y(0); y < m_height; y++) {
+		for (uint x(0); x < m_width; x++) {
+			for (uint i(0); i < m_colorComponents; ++i) {
+        color = double(image[m_colorComponents * (m_width * y + x) + i]);
+				color = clamp(color, 0.0, 255.0);
+				m_data[m_colorComponents * (m_width * y + x) + i] = (color / 255.0);
+			}
+		}
+	}
+
+	return true;
+}
+
+//---------------------------------------------------------------------------------------
 const double * Image::data() const
 {
   return m_data;

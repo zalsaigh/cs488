@@ -127,6 +127,7 @@ bool Mesh::hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const
 			closestT = currRec.m_t;
 			hitAnything = true;
 			rec = currRec;
+			rec.m_prim = this;
 		}
 	}
     return hitAnything;

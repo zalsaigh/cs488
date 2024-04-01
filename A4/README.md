@@ -14,3 +14,10 @@ Also used lots of the supplemental documents provided by Prof Baranoski - specif
 
 Light attenuation formula taken from http://learnwebgl.brown37.net/09_lights/lights_attenuation.html
 
+Basketball texture taken from https://www.robinwood.com/Catalog/FreeStuff/Textures/TextureDownloads/Balls/BasketballColor.jpg
+
+Basketball court texture taken from [Basketball court floor with line on wooden](https://stock.adobe.com/ca/images/basketball-court-floor-with-line-on-wooden/137638303?prev_url=detail) by Kittichai
+
+Instructions on texture mapping taken from course notes, Peter Shirley FoCG, and https://people.computing.clemson.edu/~dhouse/courses/405/notes/texture-maps.pdf
+
+

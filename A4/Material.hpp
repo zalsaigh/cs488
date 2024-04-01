@@ -8,7 +8,8 @@ class HitRecord;
 class Ray;
 
 enum class MaterialType {
-	PhongMaterial
+	PhongMaterial,
+  PhongTexture
 };
 
 class Material {

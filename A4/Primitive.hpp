@@ -6,6 +6,7 @@
 
 class Ray;
 class Material;
+class Primitive;
 
 class HitRecord
 {
@@ -14,6 +15,7 @@ public:
   glm::vec3 m_normal;
   float m_t;
   Material* m_mat;
+  const Primitive* m_prim;
   bool m_isFrontFace;
 
   void setFaceAndNormal(const Ray& r, const glm::vec3& outwardNormalOfSurface);
@@ -24,6 +26,11 @@ public:
   virtual ~Primitive();
 
   virtual bool hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const = 0;
+  virtual void setPosition(glm::vec3 pos) = 0;
+  virtual glm::vec3 getPosition() const = 0;
+  virtual double getDimensionalSize() const = 0; // Radius for sphere, size for box, etc.
+  virtual glm::vec3 getEndPosition() const = 0;
+  virtual glm::vec2 getTextureCoords(const HitRecord &rec) const = 0;
 };
 
 class Sphere : public Primitive {
@@ -31,6 +38,11 @@ public:
   virtual ~Sphere();
 
   virtual bool hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const override;
+  virtual void setPosition(glm::vec3 pos) override {} // Does nothing
+  virtual glm::vec3 getPosition() const override { return {0, 0, 0}; }
+  virtual double getDimensionalSize() const override { return 1.0; } // Unused
+  virtual glm::vec3 getEndPosition() const override { return {0, 0, 0}; } // Unused
+  virtual glm::vec2 getTextureCoords(const HitRecord &rec) const override {return {0, 0}; } // Unused
 };
 
 class Cube : public Primitive {
@@ -38,6 +50,11 @@ public:
   virtual ~Cube();
 
   virtual bool hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const override;
+  virtual void setPosition(glm::vec3 pos) override {} // Does nothing
+  virtual glm::vec3 getPosition() const override { return {0, 0, 0}; }
+  virtual double getDimensionalSize() const override { return 1.0; } // Unused
+  virtual glm::vec3 getEndPosition() const override { return {0, 0, 0}; } // Unused
+  virtual glm::vec2 getTextureCoords(const HitRecord &rec) const override {return {0, 0}; } // Unused
 };
 
 class NonhierSphere : public Primitive {
@@ -49,6 +66,11 @@ public:
   virtual ~NonhierSphere();
 
   virtual bool hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const override;
+  virtual void setPosition(glm::vec3 pos) override { m_pos = pos; }
+  virtual glm::vec3 getPosition() const override { return m_pos; }
+  virtual double getDimensionalSize() const override { return m_radius; }
+  virtual glm::vec3 getEndPosition() const override { return {0, 0, 0}; } // Unused
+  virtual glm::vec2 getTextureCoords(const HitRecord &rec) const override;
 
 private:
   glm::vec3 m_pos;
@@ -69,6 +91,15 @@ public:
   virtual ~NonhierBox();
 
   virtual bool hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const override;
+  virtual void setPosition(glm::vec3 pos) override
+  {
+    m_end = m_end - (pos - m_pos);
+    m_pos = pos;
+  }
+  virtual glm::vec3 getPosition() const override { return m_pos; }
+  virtual double getDimensionalSize() const override { return m_size; } // Unused
+  virtual glm::vec3 getEndPosition() const override { return m_end; }
+  virtual glm::vec2 getTextureCoords(const HitRecord &rec) const override;
 
 private:
   glm::vec3 m_pos;

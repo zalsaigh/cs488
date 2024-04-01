@@ -33,8 +33,15 @@ struct Triangle
 // A polygonal mesh.
 class Mesh : public Primitive {
 public:
-  Mesh( const std::string& fname );
-  ~Mesh();
+  	Mesh( const std::string& fname );
+  	~Mesh();
+
+  	virtual bool hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const override;
+  	virtual void setPosition(glm::vec3 pos) override {} // Does nothing
+  	virtual glm::vec3 getPosition() const override { return {0, 0, 0}; } // Unused
+  	virtual double getDimensionalSize() const override { return 1.0; } // Unused
+  	virtual glm::vec3 getEndPosition() const override { return {0, 0, 0}; } // Unused
+	virtual glm::vec2 getTextureCoords(const HitRecord &rec) const override { return {0,0}; } // Unused
   
 private:
 	std::vector<glm::vec3> m_vertices;
@@ -42,6 +49,4 @@ private:
 	NonhierBox *m_boundingBox;
 
     friend std::ostream& operator<<(std::ostream& out, const Mesh& mesh);
-
-	virtual bool hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const override;
 };

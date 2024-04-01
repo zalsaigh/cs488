@@ -50,6 +50,7 @@ bool Sphere::hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const
         rec.m_hitpoint = r.at(t);
         glm::vec3 outwardNormalOfSurface = glm::normalize(rec.m_hitpoint);
         rec.setFaceAndNormal(r, outwardNormalOfSurface);
+        rec.m_prim = this;
         // Material is set by geometry node in A4.cpp
         return true;
     }
@@ -67,6 +68,7 @@ bool Sphere::hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const
     rec.m_hitpoint = r.at(t);
     glm::vec3 outwardNormalOfSurface = glm::normalize(rec.m_hitpoint);
     rec.setFaceAndNormal(r, outwardNormalOfSurface);
+    rec.m_prim = this;
 
     // Material is set by the geometry node in A4.cpp
 
@@ -140,6 +142,7 @@ bool Cube::hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const
     }
 
     rec.setFaceAndNormal(r, outwardNormalOfSurface);
+    rec.m_prim = this;
 
     return true;
 }
@@ -173,6 +176,7 @@ bool NonhierSphere::hit(const Ray &r, float t_0, float t_1, HitRecord& rec) cons
         rec.m_hitpoint = r.at(t);
         glm::vec3 outwardNormalOfSurface = glm::normalize(rec.m_hitpoint - m_pos);
         rec.setFaceAndNormal(r, outwardNormalOfSurface);
+        rec.m_prim = this;
         // Material is set by geometry node in A4.cpp
         return true;
     }
@@ -190,10 +194,24 @@ bool NonhierSphere::hit(const Ray &r, float t_0, float t_1, HitRecord& rec) cons
     rec.m_hitpoint = r.at(t);
     glm::vec3 outwardNormalOfSurface = glm::normalize(rec.m_hitpoint - m_pos);
     rec.setFaceAndNormal(r, outwardNormalOfSurface);
+    rec.m_prim = this;
 
     // Material is set by the geometry node in A4.cpp
 
     return true;
+}
+
+//---------------------------------------------------------------------------------------
+glm::vec2 NonhierSphere::getTextureCoords(const HitRecord &rec) const
+{
+    glm::vec3 localCoords = rec.m_hitpoint - m_pos;
+    localCoords.x = glm::clamp(localCoords.x, float(-m_radius), float(m_radius));
+    localCoords.y = glm::clamp(localCoords.y, float(-m_radius), float(m_radius));
+    localCoords.z = glm::clamp(localCoords.z, float(-m_radius), float(m_radius));
+
+    float u = (localCoords.z == 0.0f && localCoords.x == 0.0f) ? 0.0f : (M_PI + glm::atan(-localCoords.z / localCoords.x)) / (2*M_PI);
+    float v = glm::acos(-localCoords.y / m_radius) / M_PI;
+    return {u, v};
 }
 
 //---------------------------------------------------------------------------------------
@@ -273,7 +291,79 @@ bool NonhierBox::hit(const Ray &r, float t_0, float t_1, HitRecord& rec) const
     }
 
     rec.setFaceAndNormal(r, outwardNormalOfSurface);
+    rec.m_prim = this;
 
     return true;
 }
 
+//---------------------------------------------------------------------------------------
+glm::vec2 NonhierBox::getTextureCoords(const HitRecord &rec) const
+{
+    //  TODO: UPDATE
+    float sizeX = m_end.x - m_pos.x;
+    float sizeY = m_end.y - m_pos.y;
+    float sizeZ = m_end.z - m_pos.z;
+    float u = 0.0f;
+    float v = 0.0f;
+    if (rec.m_normal.x != 0.0f)
+    {
+        if (rec.m_normal.x == 1.0f)
+        {
+            // Right face
+            glm::vec3 localCoords = rec.m_hitpoint - m_end; // m_end is the topleft vertex
+
+            // Right face has negative z-axis as positive u-axis, and negative y-axis as positive v-axis (v-axis goes down)
+            u = glm::clamp(-localCoords.z / sizeZ, 0.0f, 1.0f);
+            v = glm::clamp(-localCoords.y / sizeY, 0.0f, 1.0f);
+        } else // -1.0f
+        {
+            // Left face
+            glm::vec3 localCoords = rec.m_hitpoint - glm::vec3(m_pos.x, m_end.y, m_pos.z);
+
+            // Left face has positive z-axis as positive u-axis, and negative y-axis as positive v-axis (v-axis goes down)
+            u = glm::clamp(localCoords.z / sizeZ, 0.0f, 1.0f);
+            v = glm::clamp(-localCoords.y / sizeY, 0.0f, 1.0f);
+        }
+    } else if (rec.m_normal.y != 0.0f)
+    {
+        if (rec.m_normal.y == 1.0f)
+        {
+            // Top face
+            glm::vec3 localCoords = rec.m_hitpoint - glm::vec3(m_pos.x, m_end.y, m_pos.z);
+
+            // Top face has positive x-axis as positive u-axis, and positive z-axis as positive v-axis (v-axis goes down)
+            u = glm::clamp(localCoords.x / sizeX, 0.0f, 1.0f);
+            v = glm::clamp(localCoords.z / sizeZ, 0.0f, 1.0f);
+        } else // -1.0f
+        {
+            // Bottom face
+            glm::vec3 localCoords = rec.m_hitpoint - glm::vec3(m_end.x, m_pos.y, m_pos.z);
+
+            // Bottom face has negative x-axis as positive u-axis, and positive z-axis as positive v-axis (v-axis goes down)
+            u = glm::clamp(-localCoords.x / sizeX, 0.0f, 1.0f);
+            v = glm::clamp(localCoords.z / sizeZ, 0.0f, 1.0f);
+        }
+
+    } else // z axis normal
+    {
+        if (rec.m_normal.z == 1.0f)
+        {
+            // Front face
+            glm::vec3 localCoords = rec.m_hitpoint - glm::vec3(m_pos.x, m_end.y, m_end.z);
+
+            // Front face has positive x-axis as positive u-axis, and negative y-axis as positive v-axis (v-axis goes down)
+            u = glm::clamp(localCoords.x / sizeX, 0.0f, 1.0f);
+            v = glm::clamp(-localCoords.y / sizeY, 0.0f, 1.0f);
+        } else // -1.0f
+        {
+            // Back face
+            glm::vec3 localCoords = rec.m_hitpoint - glm::vec3(m_end.x, m_end.y, m_pos.z);
+
+            // Back face has negative x-axis as positive u-axis, and negative y-axis as positive v-axis (v-axis goes down)
+            u = glm::clamp(-localCoords.x / sizeX, 0.0f, 1.0f);
+            v = glm::clamp(-localCoords.y / sizeY, 0.0f, 1.0f);
+        }
+    }
+
+    return {u, v};
+}

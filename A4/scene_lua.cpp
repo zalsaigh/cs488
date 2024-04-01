@@ -55,6 +55,7 @@
 #include "Primitive.hpp"
 #include "Material.hpp"
 #include "PhongMaterial.hpp"
+#include "PhongTexture.hpp"
 #include "A4.hpp"
 
 typedef std::map<std::string,Mesh*> MeshMap;
@@ -244,6 +245,31 @@ int gr_nh_box_cmd(lua_State* L)
   return 1;
 }
 
+// Create a non-hierarchical Box node with start and end specified
+extern "C"
+int gr_nh_box_nosize_cmd(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+  
+  gr_node_ud* data = (gr_node_ud*)lua_newuserdata(L, sizeof(gr_node_ud));
+  data->node = 0;
+
+  const char* name = luaL_checkstring(L, 1);
+
+  glm::vec3 pos;
+  get_tuple(L, 2, &pos[0], 3);
+
+  glm::vec3 end;
+  get_tuple(L, 3, &end[0], 3);
+
+  data->node = new GeometryNode(name, new NonhierBox(pos, end));
+
+  luaL_getmetatable(L, "gr.node");
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
+
 // Create a polygonal Mesh node
 extern "C"
 int gr_mesh_cmd(lua_State* L)
@@ -347,8 +373,9 @@ int gr_render_cmd(lua_State* L)
   }
 
 	Image im( width, height);
-	A4_Render(root->node, im, eye, view, up, fov, ambient, lights);
-    im.savePng( filename );
+	// A4_Render(root->node, im, eye, view, up, fov, ambient, lights);
+    // im.savePng( filename );
+  CreateFrames(root->node, im, eye, view, up, fov, ambient, lights, filename);
 
 	return 0;
 }
@@ -414,6 +441,30 @@ int gr_node_set_material_cmd(lua_State* L)
   
   gr_material_ud* matdata = (gr_material_ud*)luaL_checkudata(L, 2, "gr.material");
   luaL_argcheck(L, matdata != 0, 2, "Material expected");
+
+  Material* material = matdata->material;
+
+  self->setMaterial(material);
+
+  return 0;
+}
+
+// Set a node's Material according to a texture
+// USE ONLY THIS OR SET_MATERIAL
+extern "C"
+int gr_node_set_texture_cmd(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+  
+  gr_node_ud* selfdata = (gr_node_ud*)luaL_checkudata(L, 1, "gr.node");
+  luaL_argcheck(L, selfdata != 0, 1, "Node expected");
+
+  GeometryNode* self = dynamic_cast<GeometryNode*>(selfdata->node);
+
+  luaL_argcheck(L, self != 0, 1, "Geometry node expected");
+  
+  gr_material_ud* matdata = (gr_material_ud*)luaL_checkudata(L, 2, "gr.texture");
+  luaL_argcheck(L, matdata != 0, 2, "Texture expected");
 
   Material* material = matdata->material;
 
@@ -513,6 +564,40 @@ int gr_node_gc_cmd(lua_State* L)
   return 0;
 }
 
+// Create a Material
+extern "C"
+int gr_texture_cmd(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+  
+  gr_material_ud* data = (gr_material_ud*)lua_newuserdata(L, sizeof(gr_material_ud));
+  data->material = 0;
+  
+  const char* textureFile = luaL_checkstring(L, 1);
+
+  Image im;
+  if (!im.readPng(textureFile))
+  {
+    std::cerr << "There was a problem reading texture file " << textureFile << "\n";
+    return -1;
+  }
+
+
+  double ks[3];
+  get_tuple(L, 2, ks, 3);
+
+  double shininess = luaL_checknumber(L, 3);
+  
+  data->material = new PhongTexture(im,
+                                    glm::vec3(ks[0], ks[1], ks[2]),
+                                    shininess);
+
+  luaL_newmetatable(L, "gr.texture");
+  lua_setmetatable(L, -2);
+  
+  return 1;
+}
+
 // This is where all the "global" functions in our library are
 // declared.
 // If you want to add a new non-member function, add it HERE.
@@ -521,10 +606,12 @@ static const luaL_Reg grlib_functions[] = {
   {"sphere", gr_sphere_cmd},
   {"joint", gr_joint_cmd},
   {"material", gr_material_cmd},
+  {"texture", gr_texture_cmd},
   // New for assignment 4
   {"cube", gr_cube_cmd},
   {"nh_sphere", gr_nh_sphere_cmd},
   {"nh_box", gr_nh_box_cmd},
+  {"nh_box_nosize", gr_nh_box_nosize_cmd},
   {"mesh", gr_mesh_cmd},
   {"light", gr_light_cmd},
   {"render", gr_render_cmd},
@@ -547,6 +634,7 @@ static const luaL_Reg grlib_node_methods[] = {
   {"__gc", gr_node_gc_cmd},
   {"add_child", gr_node_add_child_cmd},
   {"set_material", gr_node_set_material_cmd},
+  {"set_texture", gr_node_set_texture_cmd},
   {"scale", gr_node_scale_cmd},
   {"rotate", gr_node_rotate_cmd},
   {"translate", gr_node_translate_cmd},
