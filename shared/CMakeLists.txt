@@ -36,5 +36,5 @@ foreach(_t IN ITEMS imgui::glfw-binding imgui::opengl3-binding)
 endforeach()
 
 set_target_properties(cs488-framework PROPERTIES
-  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib"
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
 )
