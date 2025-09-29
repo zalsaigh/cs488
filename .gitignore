@@ -47,3 +47,6 @@ vcpkg_installed/
 *.ilk
 *.pdb
 
+
+# Visual Studio
+.vs/
