@@ -41,9 +41,9 @@ A4_[Ss]olution/A4
 # vcpkg
 vcpkg_installed/
 
-# Windows executables and other generated files by compiler
-*.exe # Executable file
-*.dll # Dynamic Link Library
-*.ilk # Incremental Linker File
-*.pdb # Program Database
+# Windows executables and other generated files by compiler (executables, dynamic link libraries, program database files, incremental linker files, etc. )
+*.exe
+*.dll
+*.ilk
+*.pdb
 
