@@ -37,3 +37,16 @@ A4_[Ss]olution/A4
 /.vscode/
 
 *.zip
+
+# vcpkg
+vcpkg_installed/
+
+# Windows executables and other generated files by compiler (executables, dynamic link libraries, program database files, incremental linker files, etc. )
+*.exe
+*.dll
+*.ilk
+*.pdb
+
+
+# Visual Studio
+.vs/

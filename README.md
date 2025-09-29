@@ -3,47 +3,41 @@
 ---
 
 ## Dependencies
+* VCPKG
+    * If you're using Visual Studio: https://learn.microsoft.com/en-ca/vcpkg/get_started/get-started-vs?pivots=shell-powershell
+    * Otherwise: https://learn.microsoft.com/en-ca/vcpkg/get_started/overview#get-started-with-vcpkg
 * OpenGL 3.2+
 * GLFW
     * http://www.glfw.org/
 * Lua
     * http://www.lua.org/
-* Premake4
-    * https://github.com/premake/premake-4.x/wiki
-    * http://premake.github.io/download.html
 * GLM
     * http://glm.g-truc.net/0.9.7/index.html
 * ImGui
     * https://github.com/ocornut/imgui
-
-
 ---
 
 ## Building Projects
-We use **premake4** as our cross-platform build system. First you will need to build all
-the static libraries that the projects depend on. To build the libraries, open up a
-terminal, and **cd** to the top level of the CS488 project directory and then run the
-following:
+We use CMake as our cross-platform build system. First you will need to fetch all
+dependencies from `vcpkg` by doing `vcpkg install`. This will use the existing `vcpkg.json`
+to install all dependencies.
 
-    $ premake4 gmake
-    $ make
+If you're using Visual Studio, you can now click on the green arrow to build and run your
+project. Otherwise, the equivalent CMake commands are ChatGPT-able, but they're roughly:
+```
+    $ mkdir build
+    $ cd build
+    $ cmake .. -DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]/scripts/buildsystems/vcpkg.cmake
+    $ cmake --build .
+```
+This will generate the build files in a `build` directory, and then build the project.
+You can then run your project executable from the `build` directory.
 
-This will build the following static libraries, and place them in the top level **lib**
-folder of your cs488 project directory.
-* libcs488-framework.a
-* libglfw3.a
-* libimgui.a
+```
+    $ ./build/A0.exe
+```
 
-Next we can build a specific project.  To do this, **cd** into one of the project folders,
-say **A0** for example, and run the following terminal commands in order to compile the A0 executable using all .cpp files in the A0 directory:
-
-    $ cd A0/
-    $ premake4 gmake
-    $ make
-
-
-----
-
+---
 ## Windows
 Sorry for all of the hardcore Microsoft fans out there.  We have not had time to test the build system on Windows yet. Currently our build steps work for OSX and Linux, but all the steps should be the same on Windows, except you will need different libraries to link against when building your project executables.  Some good news is that premake4 can output a Visual Studio .sln file by running:
 

@@ -1,0 +1,20 @@
+{
+  "name": "cs488",
+  "version-string": "0.1.0",
+  "description": "C++ graphics framework for cs488 exercises",
+  "builtin-baseline": "c78ed12e24c310421fcf930539dacf5b55656648",
+  "dependencies": [
+    "gl3w",
+    "glfw3",
+    "glm",
+    {
+      "name": "imgui",
+      "features": [
+        "glfw-binding",
+        "opengl3-binding"
+      ]
+    },
+    "lodepng",
+    "lua"
+  ]
+}
